@@ -3,7 +3,8 @@
 -- ============================================================
 
 -- Create table for tracking all change requests with full history
-CREATE TABLE IF NOT EXISTS agreement_change_requests (
+DROP TABLE IF EXISTS agreement_change_requests CASCADE;
+CREATE TABLE agreement_change_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   agreement_id uuid NOT NULL REFERENCES agreements(id) ON DELETE CASCADE,
   requested_by uuid NOT NULL, -- Can be staff or client user
@@ -69,6 +70,7 @@ CREATE POLICY "client insert own change requests"
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS trg_agreement_change_requests_updated_at ON agreement_change_requests;
 CREATE TRIGGER trg_agreement_change_requests_updated_at
   BEFORE UPDATE ON agreement_change_requests
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
