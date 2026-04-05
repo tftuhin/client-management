@@ -20,6 +20,8 @@ export const agreementStatusSchema = z.enum([
 export const createAgreementSchema = z.object({
   client_id: z.string().uuid('Must be a valid client ID'),
 
+  project_id: z.string().uuid().nullable().optional(),
+
   title: z
     .string()
     .min(1, 'Title is required')

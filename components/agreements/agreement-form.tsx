@@ -15,15 +15,18 @@ import type { Database } from '@/types/database'
 
 type Client = Pick<Database['public']['Tables']['clients']['Row'], 'id' | 'company_name'>
 type Template = Database['public']['Tables']['agreement_templates']['Row']
+type Project = Pick<Database['public']['Tables']['projects']['Row'], 'id' | 'name'>
 
 interface AgreementFormProps {
   clients: Client[]
   templates: Template[]
+  projects?: Project[]
   defaultClientId?: string
+  defaultProjectId?: string
   onSuccess?: () => void
 }
 
-export function AgreementForm({ clients, templates, defaultClientId, onSuccess }: AgreementFormProps) {
+export function AgreementForm({ clients, templates, projects, defaultClientId, defaultProjectId, onSuccess }: AgreementFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -31,6 +34,7 @@ export function AgreementForm({ clients, templates, defaultClientId, onSuccess }
     resolver: zodResolver(createAgreementSchema),
     defaultValues: {
       client_id: defaultClientId ?? '',
+      project_id: defaultProjectId ?? undefined,
       title: '',
       content: '',
     },
@@ -83,6 +87,29 @@ export function AgreementForm({ clients, templates, defaultClientId, onSuccess }
         />
         {errors.client_id && <p className="text-xs text-destructive">{errors.client_id.message}</p>}
       </div>
+
+      {projects && projects.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <Label>Project (optional)</Label>
+          <Controller
+            name="project_id"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Link to a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No project</SelectItem>
+                  {projects.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+      )}
 
       {templates.length > 0 && (
         <div className="flex flex-col gap-1.5">

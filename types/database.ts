@@ -10,6 +10,7 @@ export type Json =
   | Json[];
 
 export type StaffRole = "owner" | "admin" | "project_manager" | "member"
+export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled"
 
 export type PipelineStage =
   | "lead"
@@ -101,6 +102,22 @@ export interface Database {
         >;
         Update: Partial<Database["public"]["Tables"]["clients"]["Insert"]>;
       };
+      projects: {
+        Row: {
+          id: string;
+          client_id: string;
+          name: string;
+          description: string | null;
+          status: ProjectStatus;
+          agreement_id: string | null;
+          assigned_to: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["projects"]["Insert"]>;
+      };
       project_requirements: {
         Row: {
           id: string;
@@ -134,6 +151,7 @@ export interface Database {
         Row: {
           id: string;
           client_id: string;
+          project_id: string | null;
           title: string;
           content: string;
           status: AgreementStatus;
@@ -182,6 +200,8 @@ export interface Database {
           payment_terms: string | null;
           source: string | null;
           invoice_type: "one_time" | "recurring" | null;
+          project_id: string | null;
+          agreement_id: string | null;
           pdf_storage_path: string | null;
           created_by: string | null;
           created_at: string;
@@ -333,6 +353,7 @@ export interface Database {
         Row: {
           id: string;
           client_id: string;
+          project_id: string | null;
           invited_by: string;
           email: string;
           status: "pending" | "accepted" | "expired";

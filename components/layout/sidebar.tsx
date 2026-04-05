@@ -8,6 +8,7 @@ import {
   Kanban,
   FileText,
   Receipt,
+  FolderOpen,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -22,6 +23,7 @@ const STAFF_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/pipeline', label: 'Pipeline', icon: Kanban, exact: false },
   { href: '/clients', label: 'Clients', icon: Users, exact: false },
+  { href: '/projects', label: 'Projects', icon: FolderOpen, exact: false },
   { href: '/agreements', label: 'Agreements', icon: FileText, exact: false },
   { href: '/invoices', label: 'Invoices', icon: Receipt, exact: false },
 ]

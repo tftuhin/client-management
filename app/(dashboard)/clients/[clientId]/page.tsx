@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { EmptyState } from '@/components/shared/empty-state'
 import { formatCurrency, formatDate, formatRelativeTime, getInitials } from '@/lib/utils'
-import { ArrowLeft, Globe, Mail, Phone, MapPin, FileText, Receipt, MessageSquare, Lightbulb } from 'lucide-react'
+import { ArrowLeft, Globe, Mail, Phone, MapPin, FileText, Receipt, MessageSquare, Lightbulb, FolderOpen, Plus } from 'lucide-react'
 import { ClientEditSheet } from '@/components/clients/client-edit-sheet'
 import { MessageComposer } from '@/components/clients/message-composer'
 import { InviteClientButton } from '@/components/clients/invite-client-button'
@@ -28,6 +28,7 @@ export default async function ClientDetailPage({
     { data: messages },
     { data: offers },
     { data: requirements },
+    { data: projects },
   ] = await Promise.all([
     supabase
       .from('clients')
@@ -57,6 +58,11 @@ export default async function ClientDetailPage({
     supabase
       .from('project_requirements')
       .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('projects')
+      .select('id, name, status, created_at')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false }),
   ])
@@ -157,6 +163,9 @@ export default async function ClientDetailPage({
           </TabsTrigger>
           <TabsTrigger value="messages">
             Notes {messages && messages.length > 0 && `(${messages.length})`}
+          </TabsTrigger>
+          <TabsTrigger value="projects">
+            Projects {projects && projects.length > 0 && `(${projects.length})`}
           </TabsTrigger>
           <TabsTrigger value="offers">
             Offers {offers && offers.length > 0 && `(${offers.length})`}
@@ -348,6 +357,56 @@ export default async function ClientDetailPage({
                 icon={<MessageSquare className="size-5" />}
                 title="No notes yet"
                 description="Add an internal note or client message."
+              />
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Projects */}
+        <TabsContent value="projects">
+          <div className="mt-4 space-y-3">
+            <div className="flex justify-end">
+              <Link href={`/projects/new?client=${clientId}`}>
+                <Button size="sm">
+                  <Plus className="size-4" />
+                  New project
+                </Button>
+              </Link>
+            </div>
+            {projects && projects.length > 0 ? (
+              <div className="rounded-xl ring-1 ring-foreground/10 divide-y overflow-hidden">
+                {projects.map(p => {
+                  const statusStyle: Record<string, string> = {
+                    planning: 'bg-gray-50 text-gray-600 border-gray-200',
+                    active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    on_hold: 'bg-amber-50 text-amber-700 border-amber-200',
+                    completed: 'bg-blue-50 text-blue-700 border-blue-200',
+                    cancelled: 'bg-red-50 text-red-400 border-red-200',
+                  }
+                  return (
+                    <Link key={p.id} href={`/projects/${p.id}`}
+                      className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors">
+                      <div>
+                        <p className="text-sm font-medium">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">Created {formatDate(p.created_at)}</p>
+                      </div>
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusStyle[p.status] ?? ''}`}>
+                        {p.status.replace('_', ' ')}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                icon={<FolderOpen className="size-5" />}
+                title="No projects yet"
+                description="Create a project for this client."
+                action={
+                  <Link href={`/projects/new?client=${clientId}`}>
+                    <Button size="sm"><Plus className="size-4" />New project</Button>
+                  </Link>
+                }
               />
             )}
           </div>

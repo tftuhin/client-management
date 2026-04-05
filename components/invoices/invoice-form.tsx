@@ -18,14 +18,19 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { Database } from '@/types/database'
 
 type Client = Pick<Database['public']['Tables']['clients']['Row'], 'id' | 'company_name'>
+type Project = Pick<Database['public']['Tables']['projects']['Row'], 'id' | 'name'>
+type Agreement = Pick<Database['public']['Tables']['agreements']['Row'], 'id' | 'title' | 'status'>
 
 interface InvoiceFormProps {
   clients: Client[]
+  projects?: Project[]
+  agreements?: Agreement[]
   defaultClientId?: string
+  defaultProjectId?: string
   onSuccess?: () => void
 }
 
-export function InvoiceForm({ clients, defaultClientId, onSuccess }: InvoiceFormProps) {
+export function InvoiceForm({ clients, projects, agreements, defaultClientId, defaultProjectId, onSuccess }: InvoiceFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -36,6 +41,7 @@ export function InvoiceForm({ clients, defaultClientId, onSuccess }: InvoiceForm
     resolver: zodResolver(createInvoiceSchema) as any,
     defaultValues: {
       client_id: defaultClientId ?? '',
+      project_id: defaultProjectId ?? undefined,
       title: '',
       currency: 'USD',
       discount_pct: 0,
@@ -121,6 +127,53 @@ export function InvoiceForm({ clients, defaultClientId, onSuccess }: InvoiceForm
           />
         </div>
       </div>
+
+      {projects && projects.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label>Project</Label>
+            <Controller
+              name="project_id"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Link to project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No project</SelectItem>
+                    {projects.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+          {agreements && agreements.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Agreement</Label>
+              <Controller
+                name="agreement_id"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Link to agreement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No agreement</SelectItem>
+                      {agreements.map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.title} ({a.status})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="title">Invoice title *</Label>
