@@ -32,7 +32,7 @@ export function OfferForm({ clients, defaultClientId, onSuccess }: OfferFormProp
   const [isPending, startTransition] = useTransition()
 
   const { register, handleSubmit, control, formState: { errors } } = useForm<CreateOfferInput>({
-    resolver: zodResolver(createOfferSchema),
+    resolver: zodResolver(createOfferSchema) as any,
     defaultValues: {
       client_id: defaultClientId ?? '',
       title: '',
