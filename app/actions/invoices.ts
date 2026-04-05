@@ -40,6 +40,16 @@ export async function createInvoice(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: 'Unauthorized' }
 
+  // Check if user is staff
+  const { data: staffCheck } = await supabase
+    .from('staff')
+    .select('id')
+    .eq('id', user.id)
+    .eq('is_active', true)
+    .single()
+
+  if (!staffCheck) return { data: null, error: 'Only staff members can create invoices' }
+
   const parsed = createInvoiceSchema.safeParse(raw)
   if (!parsed.success) {
     return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
