@@ -31,7 +31,7 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
   const [isPending, startTransition] = useTransition()
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<CreateAgreementInput>({
-    resolver: zodResolver(createAgreementSchema),
+    resolver: zodResolver(createAgreementSchema) as any,
     defaultValues: {
       client_id: defaultClientId ?? '',
       project_id: defaultProjectId ?? undefined,
