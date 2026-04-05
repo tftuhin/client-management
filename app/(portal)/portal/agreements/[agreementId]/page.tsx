@@ -25,6 +25,12 @@ export default async function PortalAgreementDetailPage({ params }: { params: Pr
 
   if (!agreement) notFound()
 
+  const { data: changeRequests } = await supabase
+    .from('agreement_change_requests')
+    .select('*')
+    .eq('agreement_id', agreementId)
+    .order('created_at', { ascending: false })
+
   return (
     <div className="p-6 max-w-4xl space-y-6">
       <div className="flex items-center gap-3">
@@ -82,7 +88,7 @@ export default async function PortalAgreementDetailPage({ params }: { params: Pr
             <CardTitle>Agreement content</CardTitle>
           </CardHeader>
           <CardContent>
-            <PortalAgreementDetail agreement={agreement} />
+            <PortalAgreementDetail agreement={agreement} changeRequests={changeRequests || []} />
           </CardContent>
         </Card>
       </div>

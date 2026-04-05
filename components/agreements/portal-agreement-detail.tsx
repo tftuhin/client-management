@@ -10,12 +10,14 @@ import { requestAgreementChanges, signAgreement } from '@/app/actions/agreements
 import type { Database } from '@/types/database'
 
 type Agreement = Database['public']['Tables']['agreements']['Row']
+type ChangeRequest = Database['public']['Tables']['agreement_change_requests']['Row']
 
 interface PortalAgreementDetailProps {
   agreement: Agreement
+  changeRequests: ChangeRequest[]
 }
 
-export function PortalAgreementDetail({ agreement }: PortalAgreementDetailProps) {
+export function PortalAgreementDetail({ agreement, changeRequests }: PortalAgreementDetailProps) {
   const [signatureName, setSignatureName] = useState('')
   const [changeReason, setChangeReason] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -84,6 +86,33 @@ export function PortalAgreementDetail({ agreement }: PortalAgreementDetailProps)
           </div>
         </div>
       </div>
+
+      {changeRequests.length > 0 && (
+        <div className="rounded-xl border bg-card p-4">
+          <h3 className="text-sm font-semibold mb-3">Change Request History</h3>
+          <div className="space-y-3">
+            {changeRequests.map((request) => (
+              <div key={request.id} className="rounded-lg border p-3 text-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant={request.status === 'pending' ? 'secondary' : request.status === 'approved' ? 'default' : 'destructive'}>
+                    {request.status}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(request.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="whitespace-pre-wrap">{request.change_reason}</p>
+                {request.review_notes && (
+                  <div className="mt-2 pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">Review notes:</p>
+                    <p className="text-xs whitespace-pre-wrap">{request.review_notes}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {canSign && (
         <div className="rounded-xl border bg-card p-4">

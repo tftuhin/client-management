@@ -171,13 +171,14 @@ export async function updateAgreement(
 
 export async function requestAgreementChanges(
   raw: RequestAgreementChangesInput
-): Promise<{ data: Agreement | null; error: string | null }> {
+): Promise<{ data: { changeRequestId: string } | null; error: string | null }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: 'Unauthorized' }
 
-  if (user.user_metadata?.user_type !== 'client') {
-    return { data: null, error: 'Only clients can request agreement changes' }
+  const userType = user.user_metadata?.user_type
+  if (!userType || !['client', 'staff'].includes(userType)) {
+    return { data: null, error: 'Unauthorized user type' }
   }
 
   const parsed = requestAgreementChangesSchema.safeParse(raw)
@@ -192,50 +193,54 @@ export async function requestAgreementChanges(
     .single()
 
   if (fetchError || !existing) return { data: null, error: 'Agreement not found' }
-  if (user.user_metadata?.client_id !== existing.client_id) {
+
+  // Check authorization
+  if (userType === 'client' && user.user_metadata?.client_id !== existing.client_id) {
     return { data: null, error: 'Unauthorized' }
+  }
+  if (userType === 'staff') {
+    // Staff can request changes on any agreement
   }
 
   if (!['sent', 'viewed', 'signed'].includes(existing.status)) {
     return { data: null, error: 'You can only request changes on sent or signed agreements' }
   }
 
-  const updatePayload = {
-    change_requested: true,
-    change_reason: parsed.data.change_reason,
-    ...(existing.status === 'signed'
-      ? {
-          status: 'sent',
-          signed_at: null,
-          client_signature_name: null,
-          firm_signed_at: null,
-          firm_signer: null,
-        }
-      : {}),
-  }
-
-  const { data, error } = await supabase
-    .from('agreements')
-    .update(updatePayload)
-    .eq('id', parsed.data.agreement_id)
-    .select()
+  // Insert change request
+  const { data: changeRequest, error: insertError } = await supabase
+    .from('agreement_change_requests')
+    .insert({
+      agreement_id: parsed.data.agreement_id,
+      requested_by: user.id,
+      requested_by_type: userType,
+      change_reason: parsed.data.change_reason,
+    })
+    .select('id')
     .single()
 
-  if (error) return { data: null, error: error.message }
+  if (insertError) return { data: null, error: insertError.message }
+
+  // Update agreement to mark as having pending changes
+  const { error: updateError } = await supabase
+    .from('agreements')
+    .update({ change_requested: true })
+    .eq('id', parsed.data.agreement_id)
+
+  if (updateError) return { data: null, error: updateError.message }
 
   await logActivity(supabase, {
     client_id: existing.client_id,
     actor_id: user.id,
     event_type: 'agreement_change_requested',
-    description: `Client requested changes for agreement "${existing.title}"`,
-    metadata: { agreement_id: parsed.data.agreement_id },
+    description: `${userType === 'client' ? 'Client' : 'Staff'} requested changes for agreement "${existing.title}"`,
+    metadata: { agreement_id: parsed.data.agreement_id, change_request_id: changeRequest.id },
   })
 
   revalidatePath(`/clients/${existing.client_id}`)
   revalidatePath('/agreements')
   revalidatePath(`/portal/agreements/${parsed.data.agreement_id}`)
 
-  return { data, error: null }
+  return { data: { changeRequestId: changeRequest.id }, error: null }
 }
 
 // ============================================================

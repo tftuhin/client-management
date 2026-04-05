@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { formatDate, formatDateTime } from '@/lib/utils'
@@ -34,6 +35,17 @@ export default async function AgreementDetailPage({
     .select('*')
     .or(`id.eq.${agreementId},parent_id.eq.${agreement.parent_id || agreementId}`)
     .order('version', { ascending: false })
+
+  // Fetch change requests
+  const { data: changeRequests } = await supabase
+    .from('agreement_change_requests')
+    .select(`
+      *,
+      requested_by_staff:staff!agreement_change_requests_requested_by_fkey(full_name, email),
+      reviewed_by_staff:staff!agreement_change_requests_reviewed_by_fkey(full_name, email)
+    `)
+    .eq('agreement_id', agreementId)
+    .order('created_at', { ascending: false })
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
@@ -132,6 +144,49 @@ export default async function AgreementDetailPage({
           </Card>
         </div>
       </div>
+
+      {/* Change Requests */}
+      {changeRequests && changeRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {changeRequests.map((request: any) => (
+                <div key={request.id} className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={
+                        request.status === 'pending' ? 'secondary' :
+                        request.status === 'approved' ? 'default' :
+                        request.status === 'rejected' ? 'destructive' : 'outline'
+                      }>
+                        {request.status}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {request.requested_by_type === 'staff' ? 'Staff' : 'Client'} • {formatDateTime(request.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap mb-2">{request.change_reason}</p>
+                  {request.reviewed_at && (
+                    <div className="text-xs text-muted-foreground">
+                      Reviewed by {request.reviewed_by_staff?.full_name || 'Unknown'} on {formatDateTime(request.reviewed_at)}
+                    </div>
+                  )}
+                  {request.review_notes && (
+                    <div className="mt-2 pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">Review notes:</p>
+                      <p className="text-xs whitespace-pre-wrap">{request.review_notes}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Changelog */}
       {allVersions && allVersions.length > 0 && (

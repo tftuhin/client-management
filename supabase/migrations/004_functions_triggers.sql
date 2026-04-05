@@ -83,19 +83,35 @@ BEGIN
   FOR UPDATE;
 
   IF NOT FOUND THEN
-    v_prefix   := 'INV';
-    v_next_num := 1;
+    -- Insert default firm settings if none exist
+    INSERT INTO firm_settings (
+      id,
+      firm_name,
+      invoice_prefix,
+      invoice_next_num,
+      default_currency,
+      default_tax_pct,
+      default_payment_terms
+    ) VALUES (
+      gen_random_uuid(),
+      'Default Firm',
+      'INV',
+      1,
+      'USD',
+      0.00,
+      'Net 30'
+    )
+    RETURNING id, invoice_prefix, invoice_next_num
+    INTO v_id, v_prefix, v_next_num;
   END IF;
 
   v_padded := lpad(v_next_num::TEXT, 4, '0');
   NEW.invoice_number := v_prefix || '-' || v_padded;
 
-  -- Only increment the counter if we found a row
-  IF v_id IS NOT NULL THEN
-    UPDATE firm_settings
-    SET invoice_next_num = v_next_num + 1
-    WHERE id = v_id;
-  END IF;
+  -- Increment the counter
+  UPDATE firm_settings
+  SET invoice_next_num = v_next_num + 1
+  WHERE id = v_id;
 
   RETURN NEW;
 END;

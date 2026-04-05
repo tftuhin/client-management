@@ -309,7 +309,28 @@ export interface Database {
           "id" | "created_at" | "updated_at"
         >;
         Update: Partial<Database["public"]["Tables"]["messages"]["Insert"]>;
-      };      activity_log: {
+      };
+      agreement_change_requests: {
+        Row: {
+          id: string;
+          agreement_id: string;
+          requested_by: string;
+          requested_by_type: "staff" | "client";
+          change_reason: string;
+          status: "pending" | "approved" | "rejected" | "implemented";
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          review_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["agreement_change_requests"]["Row"],
+          "id" | "created_at" | "updated_at"
+        >;
+        Update: Partial<Database["public"]["Tables"]["agreement_change_requests"]["Insert"]>;
+      };
+      activity_log: {
         Row: {
           id: string;
           client_id: string | null;
