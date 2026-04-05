@@ -99,7 +99,7 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id} label={c.company_name}>{c.company_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -119,7 +119,7 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
                 </SelectTrigger>
                 <SelectContent>
                   {CURRENCIES.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    <SelectItem key={c} value={c} label={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -141,9 +141,9 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
                     <SelectValue placeholder="Link to project" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No project</SelectItem>
+                    <SelectItem value="" label="No project">No project</SelectItem>
                     {projects.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      <SelectItem key={p.id} value={p.id} label={p.name}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -162,9 +162,9 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
                       <SelectValue placeholder="Link to agreement" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No agreement</SelectItem>
+                      <SelectItem value="" label="No agreement">No agreement</SelectItem>
                       {agreements.map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.title} ({a.status})</SelectItem>
+                        <SelectItem key={a.id} value={a.id} label={`${a.title} (${a.status})`}>{a.title} ({a.status})</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

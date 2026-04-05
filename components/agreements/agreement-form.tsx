@@ -79,7 +79,7 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
               </SelectTrigger>
               <SelectContent>
                 {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id} label={c.company_name}>{c.company_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -100,9 +100,9 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
                   <SelectValue placeholder="Link to a project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No project</SelectItem>
+                  <SelectItem value="" label="No project">No project</SelectItem>
                   {projects.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    <SelectItem key={p.id} value={p.id} label={p.name}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -120,7 +120,7 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
             </SelectTrigger>
             <SelectContent>
               {templates.map(t => (
-                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                <SelectItem key={t.id} value={t.id} label={t.name}>{t.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

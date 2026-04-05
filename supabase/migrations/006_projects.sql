@@ -41,9 +41,13 @@ ALTER TABLE invoices
 CREATE INDEX IF NOT EXISTS idx_invoices_project_id   ON invoices(project_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_agreement_id ON invoices(agreement_id);
 
--- 4. Add project_id to client_invitations (if that table exists)
-ALTER TABLE client_invitations
-  ADD COLUMN IF NOT EXISTS project_id uuid REFERENCES projects(id) ON DELETE SET NULL;
+-- 4. Add project_id to client_invitations (skip if table doesn't exist)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'client_invitations') THEN
+    ALTER TABLE client_invitations ADD COLUMN IF NOT EXISTS project_id uuid REFERENCES projects(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- 5. RLS
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
@@ -67,13 +71,23 @@ CREATE POLICY "projects_staff_all" ON projects
     EXISTS (SELECT 1 FROM staff WHERE staff.id = auth.uid())
   );
 
--- Portal clients: can view projects they're linked to
-CREATE POLICY "projects_client_read" ON projects
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM clients
-      WHERE clients.id = projects.client_id
-        AND clients.auth_user_id = auth.uid()
-    )
-  );
+-- Portal clients: can view projects they're linked to (only if auth_user_id column exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'clients' AND column_name = 'auth_user_id'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "projects_client_read" ON projects
+        FOR SELECT
+        USING (
+          EXISTS (
+            SELECT 1 FROM clients
+            WHERE clients.id = projects.client_id
+              AND clients.auth_user_id = auth.uid()
+          )
+        )
+    $policy$;
+  END IF;
+END $$;

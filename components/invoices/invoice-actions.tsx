@@ -89,7 +89,7 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
                 </SelectTrigger>
                 <SelectContent>
                   {PAYMENT_METHODS.map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    <SelectItem key={m.value} value={m.value} label={m.label}>{m.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -69,7 +69,7 @@ export function OfferForm({ clients, defaultClientId, onSuccess }: OfferFormProp
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id} label={c.company_name}>{c.company_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -98,7 +98,7 @@ export function OfferForm({ clients, defaultClientId, onSuccess }: OfferFormProp
                 </SelectTrigger>
                 <SelectContent>
                   {SERVICE_TYPES.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s} value={s} label={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

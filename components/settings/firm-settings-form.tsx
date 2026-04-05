@@ -91,7 +91,7 @@ export function FirmSettingsForm({ settings, isOwner }: FirmSettingsFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {CURRENCIES.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    <SelectItem key={c} value={c} label={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

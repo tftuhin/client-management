@@ -69,7 +69,7 @@ export function ProjectForm({ project, clients, staff, defaultClientId, onSucces
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id} label={c.company_name}>{c.company_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -102,9 +102,9 @@ export function ProjectForm({ project, clients, staff, defaultClientId, onSucces
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="" label="Unassigned">Unassigned</SelectItem>
                   {staff.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                    <SelectItem key={s.id} value={s.id} label={s.full_name}>{s.full_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -132,7 +132,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {PIPELINE_STAGES.map(s => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    <SelectItem key={s.value} value={s.value} label={s.label}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -151,7 +151,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {INDUSTRIES.map(i => (
-                    <SelectItem key={i} value={i}>{i}</SelectItem>
+                    <SelectItem key={i} value={i} label={i}>{i}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -172,7 +172,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
               </SelectTrigger>
               <SelectContent>
                 {LEAD_SOURCES.map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s} value={s} label={s}>{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
