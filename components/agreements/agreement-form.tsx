@@ -54,19 +54,30 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
 
   function onSubmit(values: CreateAgreementInput) {
     startTransition(async () => {
-      const result = await createAgreement(values)
-      if (result.error) {
-        toast.error(result.error)
-      } else {
-        toast.success('Agreement created')
-        onSuccess?.()
-        router.push(`/agreements/${result.data!.id}`)
+      try {
+        const result = await createAgreement(values)
+        if (result.error) {
+          toast.error(result.error)
+        } else {
+          toast.success('Agreement created')
+          onSuccess?.()
+          router.push(`/agreements/${result.data!.id}`)
+        }
+      } catch (err) {
+        toast.error('Unexpected error — check the console')
+        console.error('[createAgreement]', err)
       }
     })
   }
 
+  function onError(errors: Record<string, unknown>) {
+    const first = Object.values(errors)[0] as { message?: string } | undefined
+    toast.error(first?.message ?? 'Please fix the form errors before submitting')
+    console.error('[AgreementForm validation]', errors)
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label>Client *</Label>
         <Controller
