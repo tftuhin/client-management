@@ -41,10 +41,22 @@ export async function updateFirmSettings(
     return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
-  const { error } = await supabase
-    .from('firm_settings')
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
-    .eq('id', 1)
+  // firm_settings is a single-row table; get the existing row's UUID or insert defaults
+  const { data: existing } = await supabase.from('firm_settings').select('id').single()
+
+  let error: { message: string } | null = null
+  if (existing) {
+    const { error: updateErr } = await supabase
+      .from('firm_settings')
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq('id', existing.id)
+    error = updateErr
+  } else {
+    const { error: insertErr } = await supabase
+      .from('firm_settings')
+      .insert({ ...parsed.data })
+    error = insertErr
+  }
 
   if (error) return { data: null, error: error.message }
 

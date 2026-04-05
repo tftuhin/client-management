@@ -9,6 +9,7 @@ import {
   FileText,
   Receipt,
   FolderOpen,
+  Lightbulb,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ const STAFF_NAV = [
   { href: '/projects', label: 'Projects', icon: FolderOpen, exact: false },
   { href: '/agreements', label: 'Agreements', icon: FileText, exact: false },
   { href: '/invoices', label: 'Invoices', icon: Receipt, exact: false },
+  { href: '/offers', label: 'Offers', icon: Lightbulb, exact: false },
 ]
 
 interface SidebarProps {

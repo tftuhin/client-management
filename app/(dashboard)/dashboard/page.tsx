@@ -33,11 +33,17 @@ export default async function DashboardPage() {
   const currentYear = now.getFullYear()
   const prevYear = currentYear - 1
 
+  const in7Days = new Date(now)
+  in7Days.setDate(now.getDate() + 7)
+  const todayStr = now.toISOString().split('T')[0]
+  const in7DaysStr = in7Days.toISOString().split('T')[0]
+
   const [
     { data: invoicesThisYear },
     { data: invoicesLastYear },
     { data: dueInvoices },
     { data: allSales },
+    { data: upcomingOffers },
   ] = await Promise.all([
     supabase
       .from('invoices')
@@ -63,6 +69,13 @@ export default async function DashboardPage() {
       .not('status', 'in', '("draft","cancelled")')
       .order('issue_date', { ascending: false })
       .limit(50),
+    supabase
+      .from('next_offers')
+      .select('id, title, service_type, estimated_value, follow_up_date, status, client_id, clients(company_name)')
+      .in('status', ['draft', 'proposed'])
+      .gte('follow_up_date', todayStr)
+      .lte('follow_up_date', in7DaysStr)
+      .order('follow_up_date', { ascending: true }),
   ])
 
   const paid = invoicesThisYear ?? []
@@ -215,6 +228,49 @@ export default async function DashboardPage() {
                     </tr>
                   )
                 })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── Upcoming Offers (Next 7 days) ─────────────────────── */}
+        {upcomingOffers && upcomingOffers.length > 0 && (
+          <div className="rounded-xl border border-violet-200 dark:border-violet-800 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-violet-100 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">Offer Pipeline — Next 7 Days</h2>
+                <span className="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/40 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-400">
+                  {upcomingOffers.length} due
+                </span>
+              </div>
+              <a href="/offers" className="text-xs text-violet-600 hover:text-violet-800 dark:text-violet-400">View all →</a>
+            </div>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-border">
+                  {['Client', 'Offer', 'Service', 'Value', 'Follow-up'].map(h => (
+                    <th key={h} className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 dark:text-muted-foreground uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-border">
+                {upcomingOffers.map(offer => (
+                  <tr key={offer.id} className="hover:bg-gray-50/50 dark:hover:bg-muted/30">
+                    <td className="px-5 py-3 text-sm font-medium text-gray-800 dark:text-foreground">
+                      <a href={`/clients/${offer.client_id}`} className="hover:text-primary">
+                        {(offer.clients as any)?.company_name ?? '—'}
+                      </a>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-gray-700 dark:text-foreground">{offer.title}</td>
+                    <td className="px-5 py-3 text-xs text-gray-500 dark:text-muted-foreground">{offer.service_type ?? '—'}</td>
+                    <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-foreground">
+                      {offer.estimated_value ? formatCurrency(offer.estimated_value) : '—'}
+                    </td>
+                    <td className="px-5 py-3 text-xs font-medium text-violet-600 dark:text-violet-400">
+                      {offer.follow_up_date ? new Date(offer.follow_up_date).toLocaleDateString('default', { month: 'short', day: 'numeric' }) : '—'}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
