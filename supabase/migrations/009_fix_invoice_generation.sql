@@ -14,9 +14,6 @@ DECLARE
   v_next_num    INTEGER;
   v_padded      TEXT;
 BEGIN
-  -- Bypass RLS for this operation
-  SET LOCAL session_replication_role = 'replica';
-
   -- Lock the firm_settings row to prevent race conditions
   SELECT id, invoice_prefix, invoice_next_num
   INTO v_id, v_prefix, v_next_num
