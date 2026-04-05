@@ -115,7 +115,7 @@ export type UpdateClientStageInput = z.infer<typeof updateClientStageSchema>
 // Project requirements schema
 // ============================================================
 
-export const createProjectRequirementsSchema = z.object({
+const projectRequirementsBaseSchema = z.object({
   client_id: z.string().uuid('Must be a valid client ID'),
 
   project_name: z
@@ -186,7 +186,9 @@ export const createProjectRequirementsSchema = z.object({
     .or(z.literal('')),
 
   is_current: z.boolean().default(true),
-}).refine(
+})
+
+export const createProjectRequirementsSchema = projectRequirementsBaseSchema.refine(
   (data) => {
     if (data.budget_min != null && data.budget_max != null) {
       return data.budget_max >= data.budget_min
@@ -196,7 +198,7 @@ export const createProjectRequirementsSchema = z.object({
   { message: 'Maximum budget must be greater than or equal to minimum budget', path: ['budget_max'] }
 )
 
-export const updateProjectRequirementsSchema = createProjectRequirementsSchema.partial().omit({ client_id: true })
+export const updateProjectRequirementsSchema = projectRequirementsBaseSchema.partial().omit({ client_id: true })
 
 export type CreateProjectRequirementsInput = z.infer<typeof createProjectRequirementsSchema>
 export type UpdateProjectRequirementsInput = z.infer<typeof updateProjectRequirementsSchema>
