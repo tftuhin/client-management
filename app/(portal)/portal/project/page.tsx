@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
@@ -163,7 +164,9 @@ export default async function PortalProjectPage() {
               {agreements.map(ag => (
                 <li key={ag.id} className="py-2.5 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{ag.title}</p>
+                    <Link href={`/portal/agreements/${ag.id}`} className="text-sm font-medium truncate hover:text-primary">
+                      {ag.title}
+                    </Link>
                     {ag.sent_at && (
                       <p className="text-xs text-muted-foreground">Sent {formatDate(ag.sent_at)}</p>
                     )}

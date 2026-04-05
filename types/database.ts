@@ -165,6 +165,8 @@ export interface Database {
           firm_signer: string | null;
           expires_at: string | null;
           pdf_storage_path: string | null;
+          change_requested: boolean;
+          change_reason: string | null;
           version: number;
           parent_id: string | null;
           created_by: string | null;
@@ -176,6 +178,16 @@ export interface Database {
           "id" | "created_at" | "updated_at"
         >;
         Update: Partial<Database["public"]["Tables"]["agreements"]["Insert"]>;
+      };
+      client_portal_users: {
+        Row: {
+          id: string;
+          client_id: string;
+          auth_user_id: string;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["client_portal_users"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["client_portal_users"]["Insert"]>;
       };
       invoices: {
         Row: {

@@ -55,7 +55,7 @@ export function EditableAgreementContent({ agreement }: EditableAgreementContent
         content,
         change_requested: true,
         change_reason: changeReason || 'Changes requested to agreement',
-      } as any)
+      })
 
       if (result.error) {
         toast.error(result.error)
@@ -115,7 +115,7 @@ export function EditableAgreementContent({ agreement }: EditableAgreementContent
           {isSigned ? (
             <Button
               onClick={handleRequestChanges}
-              disabled={isPending || !hasChanges}
+              disabled={isPending || (!hasChanges && !changeReason)}
             >
               {isPending ? 'Sending…' : 'Request changes'}
             </Button>
@@ -134,6 +134,12 @@ export function EditableAgreementContent({ agreement }: EditableAgreementContent
 
   return (
     <div className="flex flex-col gap-4">
+      {agreement.change_requested && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+          <p className="font-semibold">Change request pending</p>
+          <p className="mt-1">A revision has been requested and will be reviewed by the client.</p>
+        </div>
+      )}
       {isSigned && (
         <div className="flex items-center gap-2">
           <Badge variant="secondary">Client-approved</Badge>

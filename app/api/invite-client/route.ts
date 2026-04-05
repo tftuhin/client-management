@@ -59,8 +59,13 @@ export async function POST(req: NextRequest) {
         await admin.auth.admin.updateUserById(existingUser.id, {
           user_metadata: { user_type: 'client', client_id: clientId },
         })
-        // Update the client record to link this user
-        await admin.from('clients').update({ auth_user_id: existingUser.id }).eq('id', clientId)
+        if (!client.auth_user_id) {
+          await admin.from('clients').update({ auth_user_id: existingUser.id }).eq('id', clientId)
+        }
+        await admin.from('client_portal_users').upsert(
+          { client_id: clientId, auth_user_id: existingUser.id },
+          { onConflict: 'auth_user_id' }
+        )
         // Log the invitation
         await admin.from('client_invitations').upsert(
           { client_id: clientId, invited_by: user.id, email, status: 'accepted', accepted_at: new Date().toISOString() },
@@ -73,12 +78,17 @@ export async function POST(req: NextRequest) {
   }
 
   if (inviteData?.user) {
-    // Link the new auth user to the client record
-    await admin.from('clients')
-      .update({ auth_user_id: inviteData.user.id })
-      .eq('id', clientId)
+    if (!client.auth_user_id) {
+      await admin.from('clients')
+        .update({ auth_user_id: inviteData.user.id })
+        .eq('id', clientId)
+    }
 
-    // Record the invitation
+    await admin.from('client_portal_users').upsert(
+      { client_id: clientId, auth_user_id: inviteData.user.id },
+      { onConflict: 'auth_user_id' }
+    )
+
     await admin.from('client_invitations').insert({
       client_id: clientId,
       invited_by: user.id,

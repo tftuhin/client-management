@@ -41,6 +41,10 @@ export async function GET(request: NextRequest) {
           .eq('id', clientId)
           .is('auth_user_id', null) // only set if not already linked
 
+        await supabase
+          .from('client_portal_users')
+          .upsert({ client_id: clientId, auth_user_id: user.id }, { onConflict: 'auth_user_id' })
+
         // Mark invitation as accepted
         await supabase
           .from('client_invitations')

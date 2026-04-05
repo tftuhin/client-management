@@ -48,7 +48,14 @@ export const updateAgreementSchema = createAgreementSchema
   .extend({
     status: agreementStatusSchema.optional(),
     pdf_storage_path: z.string().nullable().optional(),
+    change_requested: z.boolean().optional(),
+    change_reason: z.string().optional(),
   })
+
+export const requestAgreementChangesSchema = z.object({
+  agreement_id: z.string().uuid('Must be a valid agreement ID'),
+  change_reason: z.string().min(1, 'Please describe the changes you want to make').max(1000),
+})
 
 // ============================================================
 // Send agreement schema
@@ -111,5 +118,6 @@ export type UpdateAgreementInput = z.infer<typeof updateAgreementSchema>
 export type SendAgreementInput = z.infer<typeof sendAgreementSchema>
 export type SignAgreementInput = z.infer<typeof signAgreementSchema>
 export type FirmSignAgreementInput = z.infer<typeof firmSignAgreementSchema>
+export type RequestAgreementChangesInput = z.infer<typeof requestAgreementChangesSchema>
 export type CreateAgreementTemplateInput = z.infer<typeof createAgreementTemplateSchema>
 export type UpdateAgreementTemplateInput = z.infer<typeof updateAgreementTemplateSchema>

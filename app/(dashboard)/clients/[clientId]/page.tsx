@@ -29,6 +29,7 @@ export default async function ClientDetailPage({
     { data: offers },
     { data: requirements },
     { data: projects },
+    { data: portalUsers },
   ] = await Promise.all([
     supabase
       .from('clients')
@@ -65,6 +66,11 @@ export default async function ClientDetailPage({
       .select('id, name, status, created_at')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('client_portal_users')
+      .select('id')
+      .eq('client_id', clientId)
+      .limit(1),
   ])
 
   if (!client) notFound()
@@ -94,7 +100,7 @@ export default async function ClientDetailPage({
             <InviteClientButton
               clientId={client.id}
               email={client.contact_email}
-              hasPortalAccess={!!client.auth_user_id}
+              hasPortalAccess={!!client.auth_user_id || !!portalUsers?.length}
             />
             <ClientEditSheet client={client}>
               <Button variant="outline" size="sm">Edit</Button>

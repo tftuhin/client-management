@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, FolderOpen, MessageSquare, Star, LogOut } from 'lucide-react'
+import { LayoutDashboard, FolderOpen, FileText, MessageSquare, Star, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 const PORTAL_NAV = [
   { href: '/portal', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/portal/project', label: 'My Project', icon: FolderOpen, exact: false },
+  { href: '/portal/agreements', label: 'Agreements', icon: FileText, exact: false },
   { href: '/portal/messages', label: 'Messages', icon: MessageSquare, exact: false },
   { href: '/portal/reviews', label: 'Reviews', icon: Star, exact: false },
 ]
