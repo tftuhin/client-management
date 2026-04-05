@@ -73,7 +73,7 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
           name="client_id"
           control={control}
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select value={field.value} onValueChange={field.onChange} items={clients.map(c => ({ value: c.id, label: c.company_name }))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select client" />
               </SelectTrigger>
@@ -95,7 +95,7 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
             name="project_id"
             control={control}
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)}>
+              <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)} items={[{ value: '', label: 'No project' }, ...projects.map(p => ({ value: p.id, label: p.name }))]}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Link to a project" />
                 </SelectTrigger>
@@ -114,7 +114,7 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
       {templates.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <Label>Template (optional)</Label>
-          <Select onValueChange={handleTemplateSelect}>
+          <Select onValueChange={handleTemplateSelect} items={templates.map(t => ({ value: t.id, label: t.name }))}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Start from a template" />
             </SelectTrigger>

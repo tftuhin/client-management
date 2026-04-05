@@ -85,7 +85,7 @@ export function FirmSettingsForm({ settings, isOwner }: FirmSettingsFormProps) {
             name="default_currency"
             control={control}
             render={({ field }) => (
-              <Select value={field.value ?? 'USD'} onValueChange={field.onChange}>
+              <Select value={field.value ?? 'USD'} onValueChange={field.onChange} items={CURRENCIES.map(c => ({ value: c, label: c }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>

@@ -63,7 +63,7 @@ export function ProjectForm({ project, clients, staff, defaultClientId, onSucces
             name="client_id"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={field.onChange} items={clients.map(c => ({ value: c.id, label: c.company_name }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
@@ -97,7 +97,7 @@ export function ProjectForm({ project, clients, staff, defaultClientId, onSucces
             name="assigned_to"
             control={control}
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || null)}>
+              <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || null)} items={[{ value: '', label: 'Unassigned' }, ...(staff ?? []).map(s => ({ value: s.id, label: s.full_name }))]}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>

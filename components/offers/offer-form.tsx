@@ -63,7 +63,7 @@ export function OfferForm({ clients, defaultClientId, onSuccess }: OfferFormProp
             name="client_id"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={field.onChange} items={clients.map(c => ({ value: c.id, label: c.company_name }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
@@ -92,7 +92,7 @@ export function OfferForm({ clients, defaultClientId, onSuccess }: OfferFormProp
             name="service_type"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={field.onChange} items={SERVICE_TYPES.map(s => ({ value: s, label: s }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>

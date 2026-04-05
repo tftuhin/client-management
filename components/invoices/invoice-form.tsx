@@ -93,7 +93,7 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
             name="client_id"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={field.onChange} items={clients.map(c => ({ value: c.id, label: c.company_name }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
@@ -113,7 +113,7 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
             name="currency"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={field.onChange} items={CURRENCIES.map(c => ({ value: c, label: c }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -136,7 +136,7 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
               name="project_id"
               control={control}
               render={({ field }) => (
-                <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)}>
+                <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)} items={[{ value: '', label: 'No project' }, ...(projects ?? []).map(p => ({ value: p.id, label: p.name }))]}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Link to project" />
                   </SelectTrigger>
@@ -157,7 +157,7 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
                 name="agreement_id"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)}>
+                  <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || undefined)} items={[{ value: '', label: 'No agreement' }, ...(agreements ?? []).map(a => ({ value: a.id, label: `${a.title} (${a.status})` }))]}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Link to agreement" />
                     </SelectTrigger>

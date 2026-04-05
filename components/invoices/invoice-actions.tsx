@@ -83,7 +83,7 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Payment method</Label>
-              <Select value={method} onValueChange={(v) => v && setMethod(v)}>
+              <Select value={method} onValueChange={(v) => v && setMethod(v)} items={PAYMENT_METHODS.map(m => ({ value: m.value, label: m.label }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>

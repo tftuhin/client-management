@@ -126,7 +126,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
             name="pipeline_stage"
             control={control}
             render={({ field }) => (
-              <Select value={field.value ?? 'lead'} onValueChange={field.onChange}>
+              <Select value={field.value ?? 'lead'} onValueChange={field.onChange} items={PIPELINE_STAGES.map(s => ({ value: s.value, label: s.label }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select stage" />
                 </SelectTrigger>
@@ -145,7 +145,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
             name="industry"
             control={control}
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <Select value={field.value ?? ''} onValueChange={field.onChange} items={INDUSTRIES.map(i => ({ value: i, label: i }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select industry" />
                 </SelectTrigger>
@@ -166,7 +166,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
           name="lead_source"
           control={control}
           render={({ field }) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
+            <Select value={field.value ?? ''} onValueChange={field.onChange} items={LEAD_SOURCES.map(s => ({ value: s, label: s }))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="How did they find you?" />
               </SelectTrigger>
