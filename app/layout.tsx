@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CRM | Web Firm",
-  description: "Client relationship management for web development firms",
+  title: "Zeon CRM",
+  description: "Client relationship management by Zeon Studio",
 };
 
 export default function RootLayout({

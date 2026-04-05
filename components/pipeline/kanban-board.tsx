@@ -5,6 +5,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -51,11 +52,15 @@ export function KanbanBoard({ initialClients }: KanbanBoardProps) {
     if (!over) return
 
     const clientId = active.id as string
-    const targetStage = over.id as PipelineStage
+    const overId = over.id as string
 
-    // Check if target is a column (stage value) or a card
-    const isStageColumn = PIPELINE_STAGES.some(s => s.value === targetStage)
-    if (!isStageColumn) return
+    // Determine target stage: could be dropping on a column or on another card
+    const isColumn = PIPELINE_STAGES.some(s => s.value === overId)
+    const targetStage = isColumn
+      ? (overId as PipelineStage)
+      : (clients.find(c => c.id === overId)?.pipeline_stage ?? null)
+
+    if (!targetStage) return
 
     const client = clients.find(c => c.id === clientId)
     if (!client || client.pipeline_stage === targetStage) return
@@ -102,7 +107,7 @@ function KanbanColumn({
   stage: (typeof PIPELINE_STAGES)[number]
   clients: Client[]
 }) {
-  const { setNodeRef, isOver } = useSortable({
+  const { setNodeRef, isOver } = useDroppable({
     id: stage.value,
     data: { type: 'column' },
   })

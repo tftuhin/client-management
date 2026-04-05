@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/shared/empty-state'
 import { getInitials, formatDate } from '@/lib/utils'
 import { Plus, Users } from 'lucide-react'
 import { NewClientSheet } from '@/components/clients/new-client-sheet'
+import { clientScope } from '@/lib/permissions'
 
 export default async function ClientsPage({
   searchParams,
@@ -19,10 +20,19 @@ export default async function ClientsPage({
   const params = await searchParams
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: staffRow } = user
+    ? await supabase.from('staff').select('role').eq('id', user.id).single()
+    : { data: null }
+  const role = staffRow?.role ?? 'member'
+  const scope = clientScope(role, user?.id ?? '')
+
   let query = supabase
     .from('clients')
     .select('id, company_name, contact_name, contact_email, pipeline_stage, industry, assigned_to, created_at, is_archived, tags')
     .order('created_at', { ascending: false })
+
+  if (scope) query = query.eq(scope.column, scope.value)
 
   if (params.archived === '1') {
     query = query.eq('is_archived', true)

@@ -3,15 +3,25 @@ import { KanbanBoard } from '@/components/pipeline/kanban-board'
 import { NewClientSheet } from '@/components/clients/new-client-sheet'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { clientScope } from '@/lib/permissions'
 
 export default async function PipelinePage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: staffRow } = user
+    ? await supabase.from('staff').select('role').eq('id', user.id).single()
+    : { data: null }
+  const scope = clientScope(staffRow?.role ?? 'member', user?.id ?? '')
 
-  const { data: clients } = await supabase
+  let query = supabase
     .from('clients')
     .select('id, company_name, contact_name, pipeline_stage, pipeline_order, industry, tags, is_archived')
     .eq('is_archived', false)
     .order('pipeline_order', { ascending: true })
+
+  if (scope) query = query.eq(scope.column, scope.value)
+
+  const { data: clients } = await query
 
   return (
     <div className="flex flex-col h-full">

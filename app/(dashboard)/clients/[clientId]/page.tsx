@@ -11,6 +11,7 @@ import { formatCurrency, formatDate, formatRelativeTime, getInitials } from '@/l
 import { ArrowLeft, Globe, Mail, Phone, MapPin, FileText, Receipt, MessageSquare, Lightbulb } from 'lucide-react'
 import { ClientEditSheet } from '@/components/clients/client-edit-sheet'
 import { MessageComposer } from '@/components/clients/message-composer'
+import { InviteClientButton } from '@/components/clients/invite-client-button'
 
 export default async function ClientDetailPage({
   params,
@@ -84,6 +85,11 @@ export default async function ClientDetailPage({
           </div>
           <div className="flex items-center gap-2">
             <StatusBadge type="pipeline" value={client.pipeline_stage} />
+            <InviteClientButton
+              clientId={client.id}
+              email={client.contact_email}
+              hasPortalAccess={!!client.auth_user_id}
+            />
             <ClientEditSheet client={client}>
               <Button variant="outline" size="sm">Edit</Button>
             </ClientEditSheet>

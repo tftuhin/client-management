@@ -14,10 +14,22 @@ import {
   type CreateProjectRequirementsInput,
   type UpdateProjectRequirementsInput,
 } from '@/lib/validations/client'
-import type { Database } from '@/types/database'
+import { isAdmin, isProjectManager } from '@/lib/permissions'
+import type { Database, StaffRole } from '@/types/database'
 
 type Client = Database['public']['Tables']['clients']['Row']
 type ProjectRequirements = Database['public']['Tables']['project_requirements']['Row']
+
+// ============================================================
+// Helper: get current user + role
+// ============================================================
+
+async function getAuthContext(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data: staff } = await supabase.from('staff').select('role').eq('id', user.id).single()
+  return { user, role: (staff?.role ?? 'member') as StaffRole }
+}
 
 // ============================================================
 // Helper: log an activity event
@@ -50,17 +62,23 @@ export async function createClientAction(
   raw: CreateClientInput
 ): Promise<{ data: Client | null; error: string | null }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: 'Unauthorized' }
+  const ctx = await getAuthContext(supabase)
+  if (!ctx) return { data: null, error: 'Unauthorized' }
+  const { user, role } = ctx
 
   const parsed = createClientSchema.safeParse(raw)
   if (!parsed.success) {
     return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
+  // PMs are automatically assigned to clients they create
+  const insertData = isProjectManager(role) && !parsed.data.assigned_to
+    ? { ...parsed.data, assigned_to: user.id }
+    : parsed.data
+
   const { data, error } = await supabase
     .from('clients')
-    .insert(parsed.data)
+    .insert(insertData)
     .select()
     .single()
 
@@ -68,13 +86,13 @@ export async function createClientAction(
 
   await logActivity(supabase, {
     client_id: data.id,
-    actor_id: user.id,
+    actor_id: ctx.user.id,
     event_type: 'client_created',
     description: `New client "${data.company_name}" was added`,
     metadata: { client_id: data.id, pipeline_stage: data.pipeline_stage },
   })
 
-  revalidatePath('/dashboard/clients')
+  revalidatePath('/clients')
   return { data, error: null }
 }
 
@@ -112,8 +130,8 @@ export async function updateClientAction(
     metadata: { client_id: clientId },
   })
 
-  revalidatePath('/dashboard/clients')
-  revalidatePath(`/dashboard/clients/${clientId}`)
+  revalidatePath('/clients')
+  revalidatePath(`/clients/${clientId}`)
   return { data, error: null }
 }
 
@@ -126,8 +144,10 @@ export async function archiveClientAction(
   archive = true
 ): Promise<{ data: Client | null; error: string | null }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: 'Unauthorized' }
+  const ctx = await getAuthContext(supabase)
+  if (!ctx) return { data: null, error: 'Unauthorized' }
+  const { user, role } = ctx
+  if (!isAdmin(role)) return { data: null, error: 'Only admins can archive clients' }
 
   const { data, error } = await supabase
     .from('clients')
@@ -146,8 +166,8 @@ export async function archiveClientAction(
     metadata: { client_id: clientId },
   })
 
-  revalidatePath('/dashboard/clients')
-  revalidatePath(`/dashboard/clients/${clientId}`)
+  revalidatePath('/clients')
+  revalidatePath(`/clients/${clientId}`)
   return { data, error: null }
 }
 
@@ -178,8 +198,8 @@ export async function updateClientStageAction(
   if (error) return { data: null, error: error.message }
 
   // Pipeline change is logged automatically by the DB trigger (log_pipeline_change)
-  revalidatePath('/dashboard/clients')
-  revalidatePath(`/dashboard/clients/${clientId}`)
+  revalidatePath('/clients')
+  revalidatePath(`/clients/${clientId}`)
   return { data, error: null }
 }
 
@@ -228,7 +248,7 @@ export async function deleteClientAction(
     metadata: { client_id: clientId },
   })
 
-  revalidatePath('/dashboard/clients')
+  revalidatePath('/clients')
   return { data: null, error: null }
 }
 
@@ -273,7 +293,7 @@ export async function createProjectRequirementsAction(
     metadata: { requirements_id: data.id },
   })
 
-  revalidatePath(`/dashboard/clients/${parsed.data.client_id}`)
+  revalidatePath(`/clients/${parsed.data.client_id}`)
   return { data, error: null }
 }
 
@@ -312,6 +332,6 @@ export async function updateProjectRequirementsAction(
     metadata: { requirements_id: requirementsId },
   })
 
-  revalidatePath(`/dashboard/clients/${clientId}`)
+  revalidatePath(`/clients/${clientId}`)
   return { data, error: null }
 }

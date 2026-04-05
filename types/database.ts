@@ -9,6 +9,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type StaffRole = "owner" | "admin" | "project_manager" | "member"
+
 export type PipelineStage =
   | "lead"
   | "prospect"
@@ -57,7 +59,7 @@ export interface Database {
           full_name: string;
           email: string;
           avatar_url: string | null;
-          role: "owner" | "admin" | "member";
+          role: StaffRole;
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -89,6 +91,7 @@ export interface Database {
           notes: string | null;
           avatar_url: string | null;
           is_archived: boolean;
+          auth_user_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -310,6 +313,33 @@ export interface Database {
         >;
         Update: Partial<Database["public"]["Tables"]["next_offers"]["Insert"]>;
       };
+      reviews: {
+        Row: {
+          id: string;
+          client_id: string;
+          author_id: string;
+          rating: number;
+          content: string | null;
+          project_name: string | null;
+          is_published: boolean;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["reviews"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["reviews"]["Insert"]>;
+      };
+      client_invitations: {
+        Row: {
+          id: string;
+          client_id: string;
+          invited_by: string;
+          email: string;
+          status: "pending" | "accepted" | "expired";
+          created_at: string;
+          accepted_at: string | null;
+        };
+        Insert: Omit<Database["public"]["Tables"]["client_invitations"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["client_invitations"]["Insert"]>;
+      };
       agreement_templates: {
         Row: {
           id: string;
@@ -365,6 +395,7 @@ export interface Database {
       message_type: MessageType;
       offer_status: OfferStatus;
       document_type: DocumentType;
+      staff_role: StaffRole;
     };
   };
 }

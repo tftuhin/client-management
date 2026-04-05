@@ -118,9 +118,9 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="mb-8 text-center">
           <div className="inline-flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg mb-3">
-            W
+            Z
           </div>
-          <h1 className="text-xl font-semibold text-foreground">Web Firm CRM</h1>
+          <h1 className="text-xl font-semibold text-foreground">Zeon CRM</h1>
           <p className="mt-1 text-sm text-muted-foreground">{titles[mode]}</p>
         </div>
 

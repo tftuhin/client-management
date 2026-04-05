@@ -31,7 +31,8 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isDashboard =
+
+  const isStaffRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/pipeline") ||
     pathname.startsWith("/clients") ||
@@ -39,16 +40,39 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/invoices") ||
     pathname.startsWith("/settings");
 
-  if (!user && isDashboard) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    return NextResponse.redirect(loginUrl);
+  const isPortalRoute = pathname.startsWith("/portal");
+  const isLoginPage = pathname === "/login";
+
+  // Derive user type from metadata set at invite/signup time
+  const userType: "staff" | "client" =
+    user?.user_metadata?.user_type === "client" ? "client" : "staff";
+
+  // ── Unauthenticated ──────────────────────────────────────────
+  if (!user && (isStaffRoute || isPortalRoute)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 
-  if (user && pathname === "/login") {
-    const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/dashboard";
-    return NextResponse.redirect(dashboardUrl);
+  // ── Authenticated on login page → redirect to home ──────────
+  if (user && isLoginPage) {
+    const url = request.nextUrl.clone();
+    url.pathname = userType === "client" ? "/portal" : "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // ── Client trying to access staff routes ─────────────────────
+  if (user && userType === "client" && isStaffRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/portal";
+    return NextResponse.redirect(url);
+  }
+
+  // ── Staff trying to access portal routes ─────────────────────
+  if (user && userType === "staff" && isPortalRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;

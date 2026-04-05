@@ -78,8 +78,8 @@ export async function createAgreement(
     metadata: { agreement_id: data.id },
   })
 
-  revalidatePath(`/dashboard/clients/${parsed.data.client_id}`)
-  revalidatePath('/dashboard/agreements')
+  revalidatePath(`/clients/${parsed.data.client_id}`)
+  revalidatePath('/agreements')
   return { data, error: null }
 }
 
@@ -138,9 +138,9 @@ export async function updateAgreement(
     metadata: { agreement_id: agreementId },
   })
 
-  revalidatePath(`/dashboard/clients/${existing.client_id}`)
-  revalidatePath('/dashboard/agreements')
-  revalidatePath(`/dashboard/agreements/${agreementId}`)
+  revalidatePath(`/clients/${existing.client_id}`)
+  revalidatePath('/agreements')
+  revalidatePath(`/agreements/${agreementId}`)
   return { data, error: null }
 }
 
@@ -194,9 +194,9 @@ export async function sendAgreement(
     metadata: { agreement_id: parsed.data.agreement_id },
   })
 
-  revalidatePath(`/dashboard/clients/${existing.client_id}`)
-  revalidatePath('/dashboard/agreements')
-  revalidatePath(`/dashboard/agreements/${parsed.data.agreement_id}`)
+  revalidatePath(`/clients/${existing.client_id}`)
+  revalidatePath('/agreements')
+  revalidatePath(`/agreements/${parsed.data.agreement_id}`)
   return { data, error: null }
 }
 
@@ -260,9 +260,9 @@ export async function signAgreement(
     },
   })
 
-  revalidatePath(`/dashboard/clients/${existing.client_id}`)
-  revalidatePath('/dashboard/agreements')
-  revalidatePath(`/dashboard/agreements/${parsed.data.agreement_id}`)
+  revalidatePath(`/clients/${existing.client_id}`)
+  revalidatePath('/agreements')
+  revalidatePath(`/agreements/${parsed.data.agreement_id}`)
   return { data, error: null }
 }
 
@@ -310,9 +310,9 @@ export async function firmSignAgreement(
     metadata: { agreement_id: parsed.data.agreement_id },
   })
 
-  revalidatePath(`/dashboard/clients/${existing.client_id}`)
-  revalidatePath('/dashboard/agreements')
-  revalidatePath(`/dashboard/agreements/${parsed.data.agreement_id}`)
+  revalidatePath(`/clients/${existing.client_id}`)
+  revalidatePath('/agreements')
+  revalidatePath(`/agreements/${parsed.data.agreement_id}`)
   return { data, error: null }
 }
 
@@ -364,7 +364,7 @@ export async function deleteAgreement(
     metadata: { agreement_id: agreementId },
   })
 
-  revalidatePath(`/dashboard/clients/${existing.client_id}`)
-  revalidatePath('/dashboard/agreements')
+  revalidatePath(`/clients/${existing.client_id}`)
+  revalidatePath('/agreements')
   return { data: null, error: null }
 }
