@@ -55,7 +55,7 @@ export async function createClientAction(
 
   const parsed = createClientSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data, error } = await supabase
@@ -92,7 +92,7 @@ export async function updateClientAction(
 
   const parsed = updateClientSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data, error } = await supabase
@@ -165,7 +165,7 @@ export async function updateClientStageAction(
 
   const parsed = updateClientStageSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data, error } = await supabase
@@ -245,7 +245,7 @@ export async function createProjectRequirementsAction(
 
   const parsed = createProjectRequirementsSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   // Mark any existing current requirements as not current
@@ -292,7 +292,7 @@ export async function updateProjectRequirementsAction(
 
   const parsed = updateProjectRequirementsSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data, error } = await supabase

@@ -272,8 +272,7 @@ export interface Database {
           "id" | "created_at" | "updated_at"
         >;
         Update: Partial<Database["public"]["Tables"]["messages"]["Insert"]>;
-      };
-      activity_log: {
+      };      activity_log: {
         Row: {
           id: string;
           client_id: string | null;
@@ -287,9 +286,7 @@ export interface Database {
           Database["public"]["Tables"]["activity_log"]["Row"],
           "id" | "created_at"
         >;
-        Update: Partial<
-          Database["public"]["Tables"]["activity_log"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["activity_log"]["Insert"]>;
       };
       next_offers: {
         Row: {
@@ -355,8 +352,12 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["firm_settings"]["Insert"]>;
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
     Enums: {
       pipeline_stage: PipelineStage;
       agreement_status: AgreementStatus;

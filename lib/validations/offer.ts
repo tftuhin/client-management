@@ -83,9 +83,7 @@ export const proposeOfferSchema = z.object({
 
 export const respondToOfferSchema = z.object({
   offer_id: z.string().uuid('Must be a valid offer ID'),
-  response: z.enum(['accepted', 'declined'], {
-    required_error: 'Response must be accepted or declined',
-  }),
+  response: z.enum(['accepted', 'declined']),
 })
 
 // ============================================================

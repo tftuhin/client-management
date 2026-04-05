@@ -54,7 +54,7 @@ export async function createAgreement(
 
   const parsed = createAgreementSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data, error } = await supabase
@@ -97,7 +97,7 @@ export async function updateAgreement(
 
   const parsed = updateAgreementSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   // Prevent editing sent/signed agreements unless admin
@@ -157,7 +157,7 @@ export async function sendAgreement(
 
   const parsed = sendAgreementSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data: existing, error: fetchError } = await supabase
@@ -213,7 +213,7 @@ export async function signAgreement(
 
   const parsed = signAgreementSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data: existing, error: fetchError } = await supabase
@@ -279,7 +279,7 @@ export async function firmSignAgreement(
 
   const parsed = firmSignAgreementSchema.safeParse(raw)
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Validation error' }
+    return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
   const { data: existing, error: fetchError } = await supabase
