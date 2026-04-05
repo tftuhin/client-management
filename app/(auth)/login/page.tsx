@@ -10,12 +10,17 @@ import { toast } from 'sonner'
 
 type Mode = 'signin' | 'signup' | 'magic'
 
+const DEMO_EMAIL = 'demo@webfirm.dev'
+const DEMO_PASSWORD = 'demo1234'
+const IS_DEV = process.env.NODE_ENV !== 'production'
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
   const [mode, setMode] = useState<Mode>('signin')
 
@@ -36,10 +41,7 @@ export default function LoginPage() {
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
-    if (!fullName.trim()) {
-      toast.error('Full name is required')
-      return
-    }
+    if (!fullName.trim()) { toast.error('Full name is required'); return }
     setLoading(true)
     const { error } = await supabase.auth.signUp({
       email,
@@ -75,6 +77,32 @@ export default function LoginPage() {
     setLoading(false)
   }
 
+  async function handleDemoLogin() {
+    setDemoLoading(true)
+
+    // Provision demo user if it doesn't exist yet
+    const res = await fetch('/api/setup-demo', { method: 'POST' })
+    if (!res.ok) {
+      const { error } = await res.json()
+      toast.error(`Demo setup failed: ${error}`)
+      setDemoLoading(false)
+      return
+    }
+
+    // Sign in as demo user
+    const { error } = await supabase.auth.signInWithPassword({
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+    })
+    if (error) {
+      toast.error(error.message)
+    } else {
+      router.push('/dashboard')
+      router.refresh()
+    }
+    setDemoLoading(false)
+  }
+
   const titles: Record<Mode, string> = {
     signin: 'Sign in to your account',
     signup: 'Create your account',
@@ -92,6 +120,29 @@ export default function LoginPage() {
           <h1 className="text-xl font-semibold text-foreground">Web Firm CRM</h1>
           <p className="mt-1 text-sm text-muted-foreground">{titles[mode]}</p>
         </div>
+
+        {/* Dev-only demo credentials banner */}
+        {IS_DEV && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-900/50 dark:bg-amber-950/30">
+            <p className="font-semibold text-amber-800 dark:text-amber-400 mb-2">
+              🧪 Development — demo account
+            </p>
+            <div className="space-y-0.5 font-mono text-xs text-amber-700 dark:text-amber-500">
+              <p>email &nbsp;&nbsp; {DEMO_EMAIL}</p>
+              <p>password {DEMO_PASSWORD}</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50"
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+            >
+              {demoLoading ? 'Setting up…' : 'Sign in as demo user'}
+            </Button>
+          </div>
+        )}
 
         <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-6">
           {magicLinkSent ? (
