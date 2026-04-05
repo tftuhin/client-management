@@ -57,10 +57,16 @@ export async function createAgreement(
     return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
+  // Convert datetime-local string to ISO (empty string → null)
+  const expiresAt = parsed.data.expires_at
+    ? (() => { const d = new Date(parsed.data.expires_at!); return isNaN(d.getTime()) ? null : d.toISOString() })()
+    : null
+
   const { data, error } = await supabase
     .from('agreements')
     .insert({
       ...parsed.data,
+      expires_at: expiresAt,
       status: 'draft',
       version: 1,
       created_by: user.id,

@@ -31,14 +31,7 @@ export const createAgreementSchema = z.object({
 
   template_used: z.string().uuid('Must be a valid template ID').nullable().optional(),
 
-  expires_at: z.preprocess(
-    v => {
-      if (v === '' || v == null) return undefined
-      const d = new Date(v as string)
-      return isNaN(d.getTime()) ? v : d.toISOString()
-    },
-    z.string().datetime({ message: 'Must be a valid datetime' }).optional().nullable()
-  ),
+  expires_at: z.string().optional().nullable(),
 })
 
 // ============================================================
@@ -59,14 +52,7 @@ export const updateAgreementSchema = createAgreementSchema
 
 export const sendAgreementSchema = z.object({
   agreement_id: z.string().uuid('Must be a valid agreement ID'),
-  expires_at: z.preprocess(
-    v => {
-      if (v === '' || v == null) return undefined
-      const d = new Date(v as string)
-      return isNaN(d.getTime()) ? v : d.toISOString()
-    },
-    z.string().datetime({ message: 'Must be a valid datetime' }).optional().nullable()
-  ),
+  expires_at: z.string().optional().nullable(),
 })
 
 // ============================================================
