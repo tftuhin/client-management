@@ -36,8 +36,7 @@ BEGIN
   BEGIN
     UPDATE firm_settings
     SET invoice_next_num = invoice_next_num + 1
-    WHERE invoice_next_num = v_next_num
-    LIMIT 1;
+    WHERE invoice_next_num = v_next_num;
   EXCEPTION
     WHEN OTHERS THEN
       -- Ignore if can't update
