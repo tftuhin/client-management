@@ -8,6 +8,7 @@ import { formatDate, formatDateTime } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
 import { AgreementActions } from '@/components/agreements/agreement-actions'
 import { EditableAgreementContent } from '@/components/agreements/editable-agreement-content'
+import { AgreementChangelog } from '@/components/agreements/agreement-changelog'
 
 export default async function AgreementDetailPage({
   params,
@@ -26,6 +27,13 @@ export default async function AgreementDetailPage({
   if (!agreement) notFound()
 
   const client = agreement.clients as any
+
+  // Fetch all versions of this agreement
+  const { data: allVersions } = await supabase
+    .from('agreements')
+    .select('*')
+    .or(`id.eq.${agreementId},parent_id.eq.${agreement.parent_id || agreementId}`)
+    .order('version', { ascending: false })
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
@@ -124,6 +132,11 @@ export default async function AgreementDetailPage({
           </Card>
         </div>
       </div>
+
+      {/* Changelog */}
+      {allVersions && allVersions.length > 0 && (
+        <AgreementChangelog agreement={agreement} allVersions={allVersions} />
+      )}
     </div>
   )
 }
