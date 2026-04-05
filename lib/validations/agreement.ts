@@ -30,9 +30,9 @@ export const createAgreementSchema = z.object({
   content: z.string().min(1, 'Agreement content is required'),
 
   template_used: z.union([
-    z.string().uuid('Must be a valid template ID'),
     z.literal(''),
-    z.null()
+    z.null(),
+    z.string().uuid('Must be a valid template ID')
   ]).transform(val => val === '' ? null : val),
 
   expires_at: z.string().optional().nullable(),
