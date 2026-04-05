@@ -37,6 +37,7 @@ export function AgreementForm({ clients, templates, projects, defaultClientId, d
       project_id: defaultProjectId ?? undefined,
       title: '',
       content: '',
+      template_used: null,
     },
   })
 
