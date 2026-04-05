@@ -1,8 +1,11 @@
 -- ============================================================
--- Migration 009: Fix invoice number generation to insert firm_settings if missing
+-- Migration 011: Fix invoice trigger with RLS bypass
 -- ============================================================
 
--- Update the generate_invoice_number function to ensure firm_settings exists
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS trg_generate_invoice_number ON invoices;
+
+-- Recreate the function with RLS bypass
 CREATE OR REPLACE FUNCTION generate_invoice_number()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -56,4 +59,12 @@ BEGIN
   WHERE id = v_id;
 
   RETURN NEW;
+END;
 $$;
+
+-- Recreate the trigger
+CREATE TRIGGER trg_generate_invoice_number
+  BEFORE INSERT ON invoices
+  FOR EACH ROW
+  WHEN (NEW.invoice_number IS NULL OR NEW.invoice_number = '')
+  EXECUTE FUNCTION generate_invoice_number();
