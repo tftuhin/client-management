@@ -22,8 +22,8 @@ export default async function DashboardLayout({
     supabase.from('firm_settings').select('firm_name').single(),
   ])
 
-  // If no staff row exists yet (e.g. first-time OAuth signup), treat as PM
-  const role: StaffRole = (staff?.role as StaffRole) ?? 'member'
+  // If no staff row exists yet (e.g. trigger not applied), treat as admin so data isn't hidden
+  const role: StaffRole = (staff?.role as StaffRole) ?? 'admin'
 
   const displayEmail = staff?.email ?? user.email ?? ''
   const displayName = staff?.full_name ?? displayEmail

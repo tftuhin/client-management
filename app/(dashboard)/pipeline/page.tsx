@@ -11,7 +11,8 @@ export default async function PipelinePage() {
   const { data: staffRow } = user
     ? await supabase.from('staff').select('role').eq('id', user.id).single()
     : { data: null }
-  const scope = clientScope(staffRow?.role ?? 'member', user?.id ?? '')
+  // If no staff record exists yet, treat as admin (no scoping) — layout already blocks client users
+  const scope = clientScope(staffRow?.role ?? 'admin', user?.id ?? '')
 
   let query = supabase
     .from('clients')

@@ -24,7 +24,8 @@ export default async function ClientsPage({
   const { data: staffRow } = user
     ? await supabase.from('staff').select('role').eq('id', user.id).single()
     : { data: null }
-  const role = staffRow?.role ?? 'member'
+  // If no staff record exists yet, treat as admin (no scoping) — layout already blocks client users
+  const role = staffRow?.role ?? 'admin'
   const scope = clientScope(role, user?.id ?? '')
 
   let query = supabase
