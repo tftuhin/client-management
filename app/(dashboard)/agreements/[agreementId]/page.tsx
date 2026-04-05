@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
 import { AgreementActions } from '@/components/agreements/agreement-actions'
+import { EditableAgreementContent } from '@/components/agreements/editable-agreement-content'
 
 export default async function AgreementDetailPage({
   params,
@@ -118,9 +119,7 @@ export default async function AgreementDetailPage({
               <CardTitle>Agreement content</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
-              <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap font-mono text-xs leading-relaxed">
-                {agreement.content}
-              </div>
+              <EditableAgreementContent agreement={agreement} />
             </CardContent>
           </Card>
         </div>
