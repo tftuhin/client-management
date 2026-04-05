@@ -79,28 +79,31 @@ export default function LoginPage() {
 
   async function handleDemoLogin() {
     setDemoLoading(true)
+    try {
+      // Provision / reset demo credentials
+      const res = await fetch('/api/setup-demo', { method: 'POST' })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(body.error ?? `Setup failed (${res.status})`)
+        return
+      }
 
-    // Provision demo user if it doesn't exist yet
-    const res = await fetch('/api/setup-demo', { method: 'POST' })
-    if (!res.ok) {
-      const { error } = await res.json()
-      toast.error(`Demo setup failed: ${error}`)
+      // Sign in
+      const { error } = await supabase.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      })
+      if (error) {
+        toast.error(`Sign-in failed: ${error.message}`)
+      } else {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    } catch (err) {
+      toast.error(`Unexpected error: ${String(err)}`)
+    } finally {
       setDemoLoading(false)
-      return
     }
-
-    // Sign in as demo user
-    const { error } = await supabase.auth.signInWithPassword({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-    })
-    if (error) {
-      toast.error(error.message)
-    } else {
-      router.push('/dashboard')
-      router.refresh()
-    }
-    setDemoLoading(false)
   }
 
   const titles: Record<Mode, string> = {
