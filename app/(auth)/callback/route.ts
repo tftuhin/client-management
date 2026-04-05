@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -48,6 +49,29 @@ export async function GET(request: NextRequest) {
           .eq('status', 'pending')
 
         return NextResponse.redirect(`${origin}/portal`)
+      }
+
+      if (userType === 'staff') {
+        const invitedRole = user.user_metadata?.invited_role ?? 'member'
+        const fullName = user.user_metadata?.full_name ?? (user.email?.split('@')[0] ?? 'Team Member')
+        // Use service role to bypass RLS staff_insert_admin policy
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        if (url && serviceKey) {
+          const adminClient = createSupabaseClient(url, serviceKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          })
+          await adminClient.from('staff').upsert(
+            {
+              id: user.id,
+              full_name: fullName,
+              email: user.email ?? '',
+              role: invitedRole,
+              is_active: true,
+            },
+            { onConflict: 'id' }
+          )
+        }
       }
 
       return NextResponse.redirect(`${origin}${next}`)

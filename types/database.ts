@@ -180,6 +180,8 @@ export interface Database {
           paid_at: string | null;
           notes: string | null;
           payment_terms: string | null;
+          source: string | null;
+          invoice_type: "one_time" | "recurring" | null;
           pdf_storage_path: string | null;
           created_by: string | null;
           created_at: string;

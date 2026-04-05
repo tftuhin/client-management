@@ -96,6 +96,16 @@ export const createInvoiceSchema = z.object({
     .optional()
     .or(z.literal('')),
 
+  source: z
+    .enum(['upwork', 'paddle', 'direct', 'other'])
+    .nullable()
+    .optional(),
+
+  invoice_type: z
+    .enum(['one_time', 'recurring'])
+    .nullable()
+    .optional(),
+
   // Optionally include line items at creation time
   line_items: z.array(lineItemSchema).min(0).default([]),
 }).refine(
@@ -145,6 +155,10 @@ export const updateInvoiceSchema = z.object({
   payment_terms: z.string().max(200).optional().or(z.literal('')),
 
   status: invoiceStatusSchema.optional(),
+
+  source: z.enum(['upwork', 'paddle', 'direct', 'other']).nullable().optional(),
+
+  invoice_type: z.enum(['one_time', 'recurring']).nullable().optional(),
 
   pdf_storage_path: z.string().nullable().optional(),
 })

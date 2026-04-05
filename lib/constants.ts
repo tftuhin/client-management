@@ -84,6 +84,58 @@ export const LEAD_SOURCES = [
   "Other",
 ];
 
+export const INVOICE_SOURCES: {
+  value: string
+  label: string
+  color: string
+  bg: string
+  border: string
+  btnBg: string
+  btnText: string
+  btnBorder: string
+}[] = [
+  {
+    value: 'upwork',
+    label: 'Upwork',
+    color: 'text-emerald-700',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+    btnBg: 'bg-emerald-50 hover:bg-emerald-100',
+    btnText: 'text-emerald-700',
+    btnBorder: 'border-emerald-300',
+  },
+  {
+    value: 'paddle',
+    label: 'Paddle',
+    color: 'text-violet-700',
+    bg: 'bg-violet-50',
+    border: 'border-violet-200',
+    btnBg: 'bg-violet-50 hover:bg-violet-100',
+    btnText: 'text-violet-700',
+    btnBorder: 'border-violet-300',
+  },
+  {
+    value: 'direct',
+    label: 'Direct',
+    color: 'text-blue-700',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    btnBg: 'bg-blue-50 hover:bg-blue-100',
+    btnText: 'text-blue-700',
+    btnBorder: 'border-blue-300',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    color: 'text-gray-600',
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
+    btnBg: 'bg-gray-50 hover:bg-gray-100',
+    btnText: 'text-gray-700',
+    btnBorder: 'border-gray-300',
+  },
+]
+
 export const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "INR", "SGD", "AED"];
 
 export const PROJECT_TYPES = [
