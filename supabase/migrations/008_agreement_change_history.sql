@@ -26,12 +26,14 @@ CREATE INDEX IF NOT EXISTS idx_agreement_change_requests_requested_by ON agreeme
 ALTER TABLE agreement_change_requests ENABLE ROW LEVEL SECURITY;
 
 -- Staff can see all change requests
+DROP POLICY IF EXISTS "staff access change requests" ON agreement_change_requests;
 CREATE POLICY "staff access change requests"
   ON agreement_change_requests FOR ALL
   USING (EXISTS (SELECT 1 FROM staff WHERE staff.id = auth.uid()))
   WITH CHECK (EXISTS (SELECT 1 FROM staff WHERE staff.id = auth.uid()));
 
 -- Clients can see change requests for their agreements
+DROP POLICY IF EXISTS "client access own change requests" ON agreement_change_requests;
 CREATE POLICY "client access own change requests"
   ON agreement_change_requests FOR SELECT
   USING (
@@ -49,6 +51,7 @@ CREATE POLICY "client access own change requests"
   );
 
 -- Clients can insert their own change requests
+DROP POLICY IF EXISTS "client insert own change requests" ON agreement_change_requests;
 CREATE POLICY "client insert own change requests"
   ON agreement_change_requests FOR INSERT
   WITH CHECK (
