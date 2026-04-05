@@ -56,4 +56,15 @@ BEGIN
   WHERE id = v_id;
 
   RETURN NEW;
+END;
 $$;
+
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS trg_generate_invoice_number ON invoices;
+
+-- Recreate the trigger
+CREATE TRIGGER trg_generate_invoice_number
+  BEFORE INSERT ON invoices
+  FOR EACH ROW
+  WHEN (NEW.invoice_number IS NULL OR NEW.invoice_number = '')
+  EXECUTE FUNCTION generate_invoice_number();
