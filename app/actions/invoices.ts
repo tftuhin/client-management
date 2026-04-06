@@ -58,7 +58,7 @@ export async function createInvoice(
 
   const { line_items, ...invoiceData } = parsed.data
 
-  const { data, error } = await supabase
+  let result = await supabase
     .from('invoices')
     .insert({ ...invoiceData, created_by: user.id })
     .select(`
@@ -67,7 +67,24 @@ export async function createInvoice(
     `)
     .single()
 
-  if (error) return { data: null, error: error.message }
+  if (result.error && /invoice_type.*does not exist|Could not find the 'invoice_type' column/i.test(result.error.message)) {
+    const { invoice_type, ...fallbackData } = invoiceData
+    const { data, error } = await supabase
+      .from('invoices')
+      .insert({ ...fallbackData, created_by: user.id })
+      .select(`
+        *,
+        clients(contact_email, company_name)
+      `)
+      .single()
+
+    if (error) return { data: null, error: error.message }
+    result = { data, error: null }
+  }
+
+  if (result.error) return { data: null, error: result.error.message }
+
+  const data = result.data
 
   // Insert line items if provided
   if (line_items && line_items.length > 0) {
@@ -128,18 +145,31 @@ export async function updateInvoice(
     return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
-  const { data, error } = await supabase
+  let result = await supabase
     .from('invoices')
     .update(parsed.data)
     .eq('id', invoiceId)
     .select()
     .single()
 
-  if (error) return { data: null, error: error.message }
+  if (result.error && /invoice_type.*does not exist|Could not find the 'invoice_type' column/i.test(result.error.message)) {
+    const { invoice_type, ...fallbackData } = parsed.data
+    const { data, error } = await supabase
+      .from('invoices')
+      .update(fallbackData)
+      .eq('id', invoiceId)
+      .select()
+      .single()
+
+    if (error) return { data: null, error: error.message }
+    result = { data, error: null }
+  }
+
+  if (result.error) return { data: null, error: result.error.message }
 
   revalidatePath('/invoices')
-  revalidatePath(`/clients/${data.client_id}`)
-  return { data, error: null }
+  revalidatePath(`/clients/${result.data.client_id}`)
+  return { data: result.data, error: null }
 }
 
 export async function sendInvoice(
