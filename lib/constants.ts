@@ -136,7 +136,17 @@ export const INVOICE_SOURCES: {
   },
 ]
 
+export const INVOICE_TYPES = [
+  { value: 'one_time', label: 'One-time' },
+  { value: 'recurring', label: 'Recurring' },
+]
+
 export const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "INR", "SGD", "AED"];
+
+export const PROJECT_PLATFORMS = [
+  { value: 'upwork', label: 'Upwork' },
+  { value: 'outside', label: 'Outside' },
+]
 
 export const PROJECT_TYPES = [
   "Website",

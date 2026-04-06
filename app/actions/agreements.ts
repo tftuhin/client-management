@@ -17,6 +17,8 @@ import {
   type RequestAgreementChangesInput,
 } from '@/lib/validations/agreement'
 import type { Database } from '@/types/database'
+import { sendEmail, emailTemplates } from '@/lib/email'
+import { generateAgreementPdf } from '@/lib/pdf'
 
 type Agreement = Database['public']['Tables']['agreements']['Row']
 
@@ -111,7 +113,7 @@ export async function updateAgreement(
   // Prevent editing sent/signed agreements unless admin
   const { data: existing, error: fetchError } = await supabase
     .from('agreements')
-    .select('status, client_id, title')
+    .select('*')
     .eq('id', agreementId)
     .single()
 
@@ -127,6 +129,55 @@ export async function updateAgreement(
     if (!staff || !['owner', 'admin'].includes(staff.role)) {
       return { data: null, error: 'Cannot edit a sent or signed agreement without admin permission' }
     }
+  }
+
+  const shouldCreateNewVersion = existing.status === 'signed' && existing.change_requested === true
+
+  if (shouldCreateNewVersion) {
+    const nextVersion = (existing.version ?? 1) + 1
+    const parentId = existing.parent_id ?? existing.id
+
+    const { data, error } = await supabase
+      .from('agreements')
+      .insert({
+        client_id: existing.client_id,
+        project_id: parsed.data.project_id ?? existing.project_id,
+        title: parsed.data.title ?? existing.title,
+        content: parsed.data.content ?? existing.content,
+        template_used: parsed.data.template_used ?? existing.template_used,
+        expires_at: parsed.data.expires_at ?? existing.expires_at,
+        status: 'sent',
+        version: nextVersion,
+        parent_id: parentId,
+        created_by: user.id,
+        change_requested: false,
+        change_reason: null,
+        signed_at: null,
+        client_signature_name: null,
+        firm_signed_at: null,
+        firm_signer: null,
+        sent_at: null,
+        viewed_at: null,
+        ...parsed.data,
+      })
+      .select()
+      .single()
+
+    if (error) return { data: null, error: error.message }
+
+    await logActivity(supabase, {
+      client_id: existing.client_id,
+      actor_id: user.id,
+      event_type: 'agreement_version_created',
+      description: `New version of agreement "${existing.title}" was created`,
+      metadata: { agreement_id: data.id, parent_agreement_id: agreementId, version: nextVersion },
+    })
+
+    revalidatePath(`/clients/${existing.client_id}`)
+    revalidatePath('/agreements')
+    revalidatePath(`/agreements/${agreementId}`)
+    revalidatePath(`/agreements/${data.id}`)
+    return { data, error: null }
   }
 
   const updatePayload = {
@@ -261,7 +312,7 @@ export async function sendAgreement(
 
   const { data: existing, error: fetchError } = await supabase
     .from('agreements')
-    .select('status, client_id, title')
+    .select('status, client_id, title, expires_at, clients(contact_email, company_name)')
     .eq('id', parsed.data.agreement_id)
     .single()
 
@@ -270,6 +321,10 @@ export async function sendAgreement(
   if (existing.status === 'signed') {
     return { data: null, error: 'Agreement is already signed' }
   }
+
+  // Get client email for sending notification
+  const clientEmail = existing.clients?.contact_email
+  const clientName = existing.clients?.company_name || 'Valued Client'
 
   const { data, error } = await supabase
     .from('agreements')
@@ -292,6 +347,22 @@ export async function sendAgreement(
     description: `Agreement "${existing.title}" was sent to the client`,
     metadata: { agreement_id: parsed.data.agreement_id },
   })
+
+  // Send email notification to client
+  if (clientEmail) {
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/agreements/${parsed.data.agreement_id}`
+    const emailContent = emailTemplates.agreementSent({
+      clientName,
+      agreementTitle: existing.title,
+      portalUrl,
+      expiresAt: data.expires_at || undefined,
+    })
+
+    await sendEmail({
+      to: clientEmail,
+      ...emailContent,
+    })
+  }
 
   revalidatePath(`/clients/${existing.client_id}`)
   revalidatePath('/agreements')
@@ -317,7 +388,7 @@ export async function signAgreement(
 
   const { data: existing, error: fetchError } = await supabase
     .from('agreements')
-    .select('status, client_id, title')
+    .select('status, client_id, title, clients(contact_email, company_name)')
     .eq('id', parsed.data.agreement_id)
     .single()
 
@@ -334,6 +405,10 @@ export async function signAgreement(
   if (existing.status === 'expired') {
     return { data: null, error: 'Cannot sign an expired agreement' }
   }
+
+  // Get client email for sending notification
+  const clientEmail = existing.clients?.contact_email
+  const clientName = existing.clients?.company_name || 'Valued Client'
 
   const { data, error } = await supabase
     .from('agreements')
@@ -359,6 +434,20 @@ export async function signAgreement(
     },
   })
 
+  // Send email confirmation to client
+  if (clientEmail && data.signed_at) {
+    const emailContent = emailTemplates.agreementSigned({
+      clientName,
+      agreementTitle: existing.title,
+      signedAt: data.signed_at,
+    })
+
+    await sendEmail({
+      to: clientEmail,
+      ...emailContent,
+    })
+  }
+
   revalidatePath(`/clients/${existing.client_id}`)
   revalidatePath('/agreements')
   revalidatePath(`/agreements/${parsed.data.agreement_id}`)
@@ -383,11 +472,15 @@ export async function firmSignAgreement(
 
   const { data: existing, error: fetchError } = await supabase
     .from('agreements')
-    .select('status, client_id, title')
+    .select('status, client_id, title, content, signed_at, client_signature_name, pdf_storage_path, version, parent_id, clients(contact_email, company_name)')
     .eq('id', parsed.data.agreement_id)
     .single()
 
   if (fetchError || !existing) return { data: null, error: 'Agreement not found' }
+
+  if (existing.status !== 'signed') {
+    return { data: null, error: 'Agreement must be signed by the client before the firm can counter-sign' }
+  }
 
   const { data, error } = await supabase
     .from('agreements')
@@ -408,6 +501,41 @@ export async function firmSignAgreement(
     description: `Agreement "${existing.title}" was counter-signed by the firm`,
     metadata: { agreement_id: parsed.data.agreement_id },
   })
+
+  // Send signed agreement PDF to the client once both signatures are complete
+  const clientEmail = (existing.clients as any)?.contact_email
+  const clientName = (existing.clients as any)?.company_name || 'Valued Client'
+
+  if (clientEmail) {
+    const pdf = await generateAgreementPdf({
+      title: existing.title,
+      clientName,
+      content: existing.content as string,
+      version: existing.version,
+      signedAt: existing.signed_at,
+      firmSignedAt: data.firm_signed_at,
+      clientSignatureName: existing.client_signature_name,
+      firmSigner: user.id,
+    })
+
+    const emailContent = emailTemplates.agreementSigned({
+      clientName,
+      agreementTitle: existing.title,
+      signedAt: data.firm_signed_at || new Date().toISOString(),
+    })
+
+    await sendEmail({
+      to: clientEmail,
+      ...emailContent,
+      attachments: [
+        {
+          filename: `agreement-${existing.version}.pdf`,
+          type: 'application/pdf',
+          data: pdf.toString('base64'),
+        },
+      ],
+    })
+  }
 
   revalidatePath(`/clients/${existing.client_id}`)
   revalidatePath('/agreements')

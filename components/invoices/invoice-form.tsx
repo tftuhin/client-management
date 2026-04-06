@@ -44,6 +44,8 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
       project_id: defaultProjectId ?? undefined,
       title: '',
       currency: 'USD',
+      source: 'direct',
+      invoice_type: 'one_time',
       discount_pct: 0,
       discount_flat: 0,
       tax_pct: 0,
@@ -174,6 +176,46 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
           )}
         </div>
       )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label>Payment media</Label>
+          <Controller
+            name="source"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value ?? 'direct'} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select payment media" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['upwork','paddle','direct','other'].map(value => (
+                    <SelectItem key={value} value={value} label={value.charAt(0).toUpperCase() + value.slice(1)}>{value.charAt(0).toUpperCase() + value.slice(1)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>Invoice type</Label>
+          <Controller
+            name="invoice_type"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value ?? 'one_time'} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select invoice type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="one_time" label="One-time">One-time</SelectItem>
+                  <SelectItem value="recurring" label="Recurring">Recurring</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="title">Invoice title *</Label>

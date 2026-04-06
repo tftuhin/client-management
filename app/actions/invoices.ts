@@ -11,6 +11,7 @@ import {
   type RecordPaymentInput,
 } from '@/lib/validations/invoice'
 import type { Database } from '@/types/database'
+import { sendEmail, emailTemplates } from '@/lib/email'
 
 type Invoice = Database['public']['Tables']['invoices']['Row']
 
@@ -60,7 +61,10 @@ export async function createInvoice(
   const { data, error } = await supabase
     .from('invoices')
     .insert({ ...invoiceData, created_by: user.id })
-    .select()
+    .select(`
+      *,
+      clients(contact_email, company_name)
+    `)
     .single()
 
   if (error) return { data: null, error: error.message }
@@ -85,6 +89,26 @@ export async function createInvoice(
     description: `Invoice "${data.invoice_number}" was created`,
     metadata: { invoice_id: data.id },
   })
+
+  // Send email notification to client
+  const clientEmail = data.clients?.contact_email
+  if (clientEmail) {
+    const clientName = data.clients?.company_name || 'Valued Client'
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/invoices/${data.id}`
+
+    const emailContent = emailTemplates.invoiceGenerated({
+      clientName,
+      invoiceNumber: data.invoice_number || 'N/A',
+      amount: `$${data.total_amount?.toFixed(2) || '0.00'}`,
+      dueDate: data.due_date || new Date().toISOString(),
+      portalUrl,
+    })
+
+    await sendEmail({
+      to: clientEmail,
+      ...emailContent,
+    })
+  }
 
   revalidatePath('/invoices')
   revalidatePath(`/clients/${data.client_id}`)
@@ -170,21 +194,39 @@ export async function recordPayment(
     return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
-  const { error } = await supabase.from('invoice_payments').insert({
+  const { error: paymentError } = await supabase.from('invoice_payments').insert({
     ...parsed.data,
     recorded_by: user.id,
   })
 
-  if (error) return { data: null, error: error.message }
+  if (paymentError) return { data: null, error: paymentError.message }
 
-  // Get invoice for activity log
-  const { data: invoice } = await supabase
+  const { data: invoice, error: invoiceFetchError } = await supabase
     .from('invoices')
-    .select('invoice_number, client_id')
+    .select('invoice_number, total, amount_paid, status, paid_at, client_id, currency')
     .eq('id', parsed.data.invoice_id)
     .single()
 
-  if (invoice) {
+  if (invoice && !invoiceFetchError) {
+    const existingPaid = invoice.amount_paid ?? 0
+    const updatedPaid = existingPaid + parsed.data.amount
+    const isFullyPaid = updatedPaid >= invoice.total
+    const updatedStatus = isFullyPaid ? 'paid' : updatedPaid > 0 ? 'partially_paid' : invoice.status
+    const updatedPaidAt = isFullyPaid ? (parsed.data.paid_at ?? new Date().toISOString()) : invoice.paid_at
+
+    const { error: updateInvoiceError } = await supabase
+      .from('invoices')
+      .update({
+        amount_paid: updatedPaid,
+        status: updatedStatus,
+        paid_at: updatedPaidAt,
+      })
+      .eq('id', parsed.data.invoice_id)
+
+    if (updateInvoiceError) {
+      return { data: null, error: updateInvoiceError.message }
+    }
+
     await logActivity(supabase, {
       client_id: invoice.client_id,
       actor_id: user.id,
@@ -192,10 +234,13 @@ export async function recordPayment(
       description: `Payment of ${parsed.data.amount} recorded for "${invoice.invoice_number}"`,
       metadata: { invoice_id: parsed.data.invoice_id, amount: parsed.data.amount },
     })
+
+    revalidatePath('/invoices')
+    revalidatePath(`/clients/${invoice.client_id}`)
+    return { data: null, error: null }
   }
 
   revalidatePath('/invoices')
-  if (invoice) revalidatePath(`/clients/${invoice.client_id}`)
   return { data: null, error: null }
 }
 

@@ -111,6 +111,7 @@ export interface Database {
           status: ProjectStatus;
           agreement_id: string | null;
           assigned_to: string | null;
+          platform: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;

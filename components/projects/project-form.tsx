@@ -34,8 +34,8 @@ export function ProjectForm({ project, clients, staff, defaultClientId, onSucces
   const { register, handleSubmit, control, formState: { errors } } = useForm<CreateProjectInput>({
     resolver: zodResolver(isEditing ? updateProjectSchema : createProjectSchema) as any,
     defaultValues: project
-      ? { name: project.name, description: project.description ?? '', assigned_to: project.assigned_to ?? undefined }
-      : { client_id: defaultClientId ?? '', name: '', description: '' },
+      ? { name: project.name, description: project.description ?? '', assigned_to: project.assigned_to ?? undefined, platform: project.platform as 'upwork' | 'outside' | undefined }
+      : { client_id: defaultClientId ?? '', name: '', description: '', platform: undefined },
   })
 
   function onSubmit(values: CreateProjectInput) {
@@ -112,6 +112,26 @@ export function ProjectForm({ project, clients, staff, defaultClientId, onSucces
           />
         </div>
       )}
+
+      <div className="flex flex-col gap-1.5">
+        <Label>Project platform</Label>
+        <Controller
+          name="platform"
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value ?? ''} onValueChange={v => field.onChange(v || null)} items={[{ value: '', label: 'Not specified' }, { value: 'upwork', label: 'Upwork' }, { value: 'outside', label: 'Outside' }]}> 
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="" label="Not specified">Not specified</SelectItem>
+                <SelectItem value="upwork" label="Upwork">Upwork</SelectItem>
+                <SelectItem value="outside" label="Outside">Outside</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </div>
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="submit" disabled={isPending}>
