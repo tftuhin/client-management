@@ -239,7 +239,7 @@ export async function requestAgreementChanges(
 
   const { data: existing, error: fetchError } = await supabase
     .from('agreements')
-    .select('status, client_id, title')
+    .select('status, client_id, title, clients(company_name)')
     .eq('id', parsed.data.agreement_id)
     .single()
 
@@ -286,6 +286,34 @@ export async function requestAgreementChanges(
     description: `${userType === 'client' ? 'Client' : 'Staff'} requested changes for agreement "${existing.title}"`,
     metadata: { agreement_id: parsed.data.agreement_id, change_request_id: changeRequest.id },
   })
+
+  // Send email to admins/project managers
+  const { data: staffMembers } = await supabase
+    .from('staff')
+    .select('email, full_name, role')
+    .in('role', ['admin', 'owner', 'project_manager'])
+    .eq('is_active', true)
+
+  if (staffMembers && staffMembers.length > 0) {
+    const clientName = (existing as any).clients?.company_name || 'A client'
+    const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL}/agreements/${parsed.data.agreement_id}`
+
+    for (const staff of staffMembers) {
+      if (staff.email) {
+        const emailContent = emailTemplates.agreementChangeRequested({
+          staffName: staff.full_name || 'Team Member',
+          clientName,
+          agreementTitle: existing.title,
+          changeReason: parsed.data.change_reason,
+          adminPortalUrl: adminUrl,
+        })
+        await sendEmail({
+          to: staff.email,
+          ...emailContent,
+        })
+      }
+    }
+  }
 
   revalidatePath(`/clients/${existing.client_id}`)
   revalidatePath('/agreements')

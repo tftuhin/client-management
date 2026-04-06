@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createProjectAction } from './projects'
+import { sendEmail, emailTemplates } from '@/lib/email'
 import {
   createOfferSchema,
   updateOfferSchema,
@@ -127,6 +128,26 @@ export async function proposeOffer(
     description: `Offer "${data.title}" was proposed`,
     metadata: { offer_id: data.id },
   })
+
+  const { data: clientData } = await supabase
+    .from('clients')
+    .select('contact_email, company_name')
+    .eq('id', data.client_id)
+    .single()
+
+  if (clientData?.contact_email) {
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/offers/${data.id}`
+    const emailContent = emailTemplates.offerProposed({
+      clientName: clientData.company_name || 'Valued Client',
+      offerTitle: data.title,
+      portalUrl,
+    })
+
+    await sendEmail({
+      to: clientData.contact_email,
+      ...emailContent,
+    })
+  }
 
   revalidatePath(`/clients/${data.client_id}`)
   return { data, error: null }

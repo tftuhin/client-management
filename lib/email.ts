@@ -181,5 +181,126 @@ export const emailTemplates = {
       Best regards,
       Your Accounting Team
     `
+  }),
+
+  offerProposed: (data: {
+    clientName: string
+    offerTitle: string
+    portalUrl: string
+  }) => ({
+    subject: `New Offer Proposed: ${data.offerTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>A New Offer is Ready for You</h2>
+        <p>Dear ${data.clientName},</p>
+        <p>We've put together a new offer for your consideration.</p>
+        <div style="background: #e9ecef; padding: 20px; margin: 20px 0; border-radius: 8px;">
+          <h3>${data.offerTitle}</h3>
+          <p>Please review the details and let us know your thoughts.</p>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.portalUrl}" style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            View Offer
+          </a>
+        </div>
+        <p>If you have any questions, feel free to reply to this email or send us a message through the portal.</p>
+        <p>Best regards,<br>Your Agency Team</p>
+      </div>
+    `,
+    text: `
+      A New Offer is Ready for You
+
+      Dear ${data.clientName},
+
+      We've put together a new offer for your consideration: ${data.offerTitle}
+
+      Please review it at: ${data.portalUrl}
+
+      If you have any questions, feel free to reply to this email or send us a message through the portal.
+
+      Best regards,
+      Your Agency Team
+    `
+  }),
+
+  messageSent: (data: {
+    clientName: string
+    messageContent: string
+    portalUrl: string
+  }) => ({
+    subject: `New Message Regarding Your Project`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>You Received a New Message</h2>
+        <p>Dear ${data.clientName},</p>
+        <p>Our team has sent you a new message:</p>
+        <div style="background: #f8f9fa; border-left: 4px solid #6c757d; padding: 15px 20px; margin: 20px 0;">
+          ${data.messageContent}
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.portalUrl}" style="background: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Reply in Portal
+          </a>
+        </div>
+        <p>Best regards,<br>Your Agency Team</p>
+      </div>
+    `,
+    text: `
+      You Received a New Message
+
+      Dear ${data.clientName},
+
+      Our team has sent you a new message:
+
+      "${data.messageContent.replace(/<[^>]+>/g, '')}"
+
+      View and reply at: ${data.portalUrl}
+
+      Best regards,
+      Your Agency Team
+    `
+  }),
+
+  agreementChangeRequested: (data: {
+    staffName: string
+    clientName: string
+    agreementTitle: string
+    changeReason: string
+    adminPortalUrl: string
+  }) => ({
+    subject: `Action Required: Changes Requested on Agreement`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Changes Requested</h2>
+        <p>Hello ${data.staffName},</p>
+        <p>The client <strong>${data.clientName}</strong> has requested changes to the following agreement:</p>
+        <div style="background: #fff3cd; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #ffc107;">
+          <h3>${data.agreementTitle}</h3>
+          <p><strong>Reason:</strong></p>
+          <p>${data.changeReason}</p>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.adminPortalUrl}" style="background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Review Request
+          </a>
+        </div>
+        <p>Best regards,<br>System Notification</p>
+      </div>
+    `,
+    text: `
+      Changes Requested
+
+      Hello ${data.staffName},
+
+      The client ${data.clientName} has requested changes to the agreement: ${data.agreementTitle}
+
+      Reason:
+      ${data.changeReason}
+
+      Review this request at: ${data.adminPortalUrl}
+
+      Best regards,
+      System Notification
+    `
   })
 }

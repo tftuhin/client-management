@@ -107,26 +107,6 @@ export async function createInvoice(
     metadata: { invoice_id: data.id },
   })
 
-  // Send email notification to client
-  const clientEmail = data.clients?.contact_email
-  if (clientEmail) {
-    const clientName = data.clients?.company_name || 'Valued Client'
-    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/invoices/${data.id}`
-
-    const emailContent = emailTemplates.invoiceGenerated({
-      clientName,
-      invoiceNumber: data.invoice_number || 'N/A',
-      amount: `$${data.total_amount?.toFixed(2) || '0.00'}`,
-      dueDate: data.due_date || new Date().toISOString(),
-      portalUrl,
-    })
-
-    await sendEmail({
-      to: clientEmail,
-      ...emailContent,
-    })
-  }
-
   revalidatePath('/invoices')
   revalidatePath(`/clients/${data.client_id}`)
   return { data, error: null }
@@ -181,7 +161,7 @@ export async function sendInvoice(
 
   const { data: existing } = await supabase
     .from('invoices')
-    .select('status, invoice_number, client_id')
+    .select('status, invoice_number, client_id, due_date, total, clients(contact_email, company_name)')
     .eq('id', invoiceId)
     .single()
 
@@ -206,6 +186,25 @@ export async function sendInvoice(
     description: `Invoice "${existing.invoice_number}" was sent`,
     metadata: { invoice_id: invoiceId },
   })
+
+  const clientEmail = (existing.clients as any)?.contact_email
+  if (clientEmail) {
+    const clientName = (existing.clients as any)?.company_name || 'Valued Client'
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/invoices/${data.id}`
+
+    const emailContent = emailTemplates.invoiceGenerated({
+      clientName,
+      invoiceNumber: existing.invoice_number || 'N/A',
+      amount: `$${(existing.total as number)?.toFixed(2) || '0.00'}`,
+      dueDate: existing.due_date || new Date().toISOString(),
+      portalUrl,
+    })
+
+    await sendEmail({
+      to: clientEmail,
+      ...emailContent,
+    })
+  }
 
   revalidatePath('/invoices')
   revalidatePath(`/clients/${existing.client_id}`)

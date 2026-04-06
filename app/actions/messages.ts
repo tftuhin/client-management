@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { sendEmail, emailTemplates } from '@/lib/email'
 import type { Database } from '@/types/database'
 
 type Message = Database['public']['Tables']['messages']['Row']
@@ -43,6 +44,28 @@ export async function createMessage(
     .single()
 
   if (error) return { data: null, error: error.message }
+
+  if (parsed.data.message_type === 'client_message') {
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('contact_email, company_name')
+      .eq('id', parsed.data.client_id)
+      .single()
+
+    if (clientData?.contact_email) {
+      const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal`
+      const emailContent = emailTemplates.messageSent({
+        clientName: clientData.company_name || 'Valued Client',
+        messageContent: data.content,
+        portalUrl,
+      })
+
+      await sendEmail({
+        to: clientData.contact_email,
+        ...emailContent,
+      })
+    }
+  }
 
   revalidatePath(`/clients/${parsed.data.client_id}`)
   return { data, error: null }
