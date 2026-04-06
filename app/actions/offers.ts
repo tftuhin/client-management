@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createProjectAction } from './projects'
 import {
   createOfferSchema,
   updateOfferSchema,
@@ -154,6 +155,20 @@ export async function respondToOffer(
     .single()
 
   if (error) return { data: null, error: error.message }
+
+  // If offer is accepted, create a new project
+  if (parsed.data.response === 'accepted') {
+    const projectResult = await createProjectAction({
+      client_id: data.client_id,
+      name: data.title,
+      description: data.description || `${data.service_type} project`,
+    })
+
+    if (projectResult.error) {
+      // Log the error but don't fail the offer acceptance
+      console.error('Failed to create project from accepted offer:', projectResult.error)
+    }
+  }
 
   await logActivity(supabase, {
     client_id: data.client_id,
