@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate, cn } from '@/lib/utils'
@@ -55,7 +55,7 @@ export default async function InvoiceDetailPage({
               href={`/api/invoices/${invoice.id}/pdf`} 
               download 
               target="_blank"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
+              className="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-border bg-background text-sm font-medium hover:bg-muted hover:text-foreground transition-colors"
             >
               <Download className="mr-2 size-4" />
               Download PDF
