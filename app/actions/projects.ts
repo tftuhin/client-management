@@ -22,17 +22,29 @@ export async function createProjectAction(
   const parsed = createProjectSchema.safeParse(raw)
   if (!parsed.success) return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
 
-  const { data, error } = await supabase
+  const insertPayload = { ...parsed.data, created_by: user.id }
+  let result = await supabase
     .from('projects')
-    .insert({ ...parsed.data, created_by: user.id })
+    .insert(insertPayload)
     .select()
     .single()
 
-  if (error) return { data: null, error: error.message }
+  if (result.error && /platform.*does not exist|Could not find the 'platform' column/i.test(result.error.message)) {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({ ...insertPayload, platform: undefined })
+      .select()
+      .single()
+
+    if (error) return { data: null, error: error.message }
+    result = { data, error: null }
+  }
+
+  if (result.error) return { data: null, error: result.error.message }
 
   revalidatePath('/projects')
   revalidatePath(`/clients/${parsed.data.client_id}`)
-  return { data, error: null }
+  return { data: result.data, error: null }
 }
 
 export async function updateProjectAction(
@@ -70,19 +82,32 @@ export async function updateProjectAction(
   const parsed = updateProjectSchema.safeParse(raw)
   if (!parsed.success) return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
 
-  const { data, error } = await supabase
+  let result = await supabase
     .from('projects')
     .update(parsed.data)
     .eq('id', projectId)
     .select('*, clients(company_name)')
     .single()
 
-  if (error) return { data: null, error: error.message }
+  if (result.error && /platform.*does not exist|Could not find the 'platform' column/i.test(result.error.message)) {
+    const updatePayload = { ...parsed.data, platform: undefined }
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updatePayload)
+      .eq('id', projectId)
+      .select('*, clients(company_name)')
+      .single()
+
+    if (error) return { data: null, error: error.message }
+    result = { data, error: null }
+  }
+
+  if (result.error) return { data: null, error: result.error.message }
 
   revalidatePath('/projects')
   revalidatePath(`/projects/${projectId}`)
-  if ((data as any)?.client_id) revalidatePath(`/clients/${(data as any).client_id}`)
-  return { data, error: null }
+  if ((result.data as any)?.client_id) revalidatePath(`/clients/${(result.data as any).client_id}`)
+  return { data: result.data, error: null }
 }
 
 export async function deleteProjectAction(
