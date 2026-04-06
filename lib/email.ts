@@ -19,7 +19,7 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions) {
   try {
-    const { to, subject, html, text, from = 'Tuhin <tuhin@zeon.studio>', attachments } = options
+    const { to, subject, html, text, from = 'onboarding@resend.dev', attachments } = options
 
     const emailData: any = {
       from,
