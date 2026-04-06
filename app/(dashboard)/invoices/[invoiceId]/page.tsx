@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { formatCurrency, formatDate } from '@/lib/utils'
-import { ArrowLeft } from 'lucide-react'
+import { formatCurrency, formatDate, cn } from '@/lib/utils'
+import { ArrowLeft, Download } from 'lucide-react'
 import { InvoiceActions } from '@/components/invoices/invoice-actions'
 
 export default async function InvoiceDetailPage({
@@ -51,6 +51,15 @@ export default async function InvoiceDetailPage({
           </div>
           <div className="flex items-center gap-2">
             <StatusBadge type="invoice" value={invoice.status} />
+            <a 
+              href={`/api/invoices/${invoice.id}/pdf`} 
+              download 
+              target="_blank"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <Download className="mr-2 size-4" />
+              Download PDF
+            </a>
             <InvoiceActions invoice={invoice} />
           </div>
         </div>
@@ -160,8 +169,8 @@ export default async function InvoiceDetailPage({
             <CardHeader className="border-b">
               <CardTitle>Line items</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <table className="w-full text-sm">
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full min-w-[500px] text-sm">
                 <thead>
                   <tr className="border-b">
                     <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Description</th>
@@ -194,8 +203,8 @@ export default async function InvoiceDetailPage({
               <CardHeader className="border-b">
                 <CardTitle>Payment history</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <table className="w-full text-sm">
+              <CardContent className="p-0 overflow-x-auto">
+                <table className="w-full min-w-[500px] text-sm">
                   <thead>
                     <tr className="border-b">
                       <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Date</th>

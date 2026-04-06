@@ -136,7 +136,7 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card size="sm">
           <CardContent className="pt-3">
             <p className="text-xs text-muted-foreground">Total invoiced</p>
@@ -194,6 +194,8 @@ export default async function ClientDetailPage({
                     ['Lead source', client.lead_source],
                     ['Assigned to', (client.staff as any)?.full_name],
                     ['Address', client.address],
+                    ['LinkedIn', client.linkedin_url],
+                    ['VAT / TAX ID', client.vat_id],
                   ].map(([label, val]) => val ? (
                     <div key={label} className="flex gap-2">
                       <dt className="text-muted-foreground w-28 shrink-0">{label}</dt>

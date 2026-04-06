@@ -84,6 +84,8 @@ export interface Database {
           annual_revenue: string | null;
           country: string | null;
           address: string | null;
+          linkedin_url: string | null;
+          vat_id: string | null;
           pipeline_stage: PipelineStage;
           pipeline_order: number;
           assigned_to: string | null;

@@ -150,7 +150,7 @@ export default async function DashboardPage() {
 
       <div className="px-8 py-6 space-y-7">
         {/* ── Stat cards ──────────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Revenue */}
           <div className="rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-card p-5">
             <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Total Revenue</p>
@@ -189,7 +189,8 @@ export default async function DashboardPage() {
                 {due.length} · {formatCurrency(totalDue)}
               </span>
             </div>
-            <table className="w-full">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-border">
                   {['Month', 'Client', 'Project', 'Source', 'Amount', 'Actions'].map(h => (
@@ -229,7 +230,8 @@ export default async function DashboardPage() {
                   )
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         )}
 
@@ -245,7 +247,8 @@ export default async function DashboardPage() {
               </div>
               <a href="/offers" className="text-xs text-violet-600 hover:text-violet-800 dark:text-violet-400">View all →</a>
             </div>
-            <table className="w-full">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-border">
                   {['Client', 'Offer', 'Service', 'Value', 'Follow-up'].map(h => (
@@ -272,14 +275,15 @@ export default async function DashboardPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         )}
 
         {/* ── Year over Year ────────────────────────────────────── */}
         <div className="rounded-xl border border-gray-200 dark:border-border p-6">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground mb-4">Year over Year</h2>
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Revenue */}
             <div>
               <p className="text-xs text-gray-400 dark:text-muted-foreground mb-1">Revenue</p>

@@ -93,7 +93,8 @@ export function AllSalesTable({ sales, sources }: AllSalesTableProps) {
       </div>
 
       {/* Table */}
-      <table className="w-full">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[800px]">
         <thead>
           <tr className="border-b border-gray-100 dark:border-border">
             {['Month', 'Client', 'Project', 'Source', 'Amount', 'Type', 'Status', 'Actions'].map(h => (
@@ -163,6 +164,7 @@ export function AllSalesTable({ sales, sources }: AllSalesTableProps) {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

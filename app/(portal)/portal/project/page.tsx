@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { Download } from 'lucide-react'
 
 export default async function PortalProjectPage() {
   const supabase = await createClient()
@@ -80,7 +81,7 @@ export default async function PortalProjectPage() {
                 <p>{requirements.description}</p>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {requirements.budget_min != null && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Budget</p>
@@ -126,8 +127,8 @@ export default async function PortalProjectPage() {
           <CardHeader className="border-b pb-3">
             <CardTitle className="text-sm font-semibold">Invoices</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
-            <table className="w-full text-sm">
+          <CardContent className="pt-0 overflow-x-auto">
+            <table className="w-full min-w-[600px] text-sm">
               <thead>
                 <tr className="border-b">
                   <th className="py-2.5 text-left text-xs font-medium text-muted-foreground">Invoice</th>
@@ -135,6 +136,7 @@ export default async function PortalProjectPage() {
                   <th className="py-2.5 text-left text-xs font-medium text-muted-foreground">Due</th>
                   <th className="py-2.5 text-right text-xs font-medium text-muted-foreground">Amount</th>
                   <th className="py-2.5 text-right text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="py-2.5 text-right text-xs font-medium text-muted-foreground"></th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -145,6 +147,11 @@ export default async function PortalProjectPage() {
                     <td className="py-2.5 text-xs text-muted-foreground">{formatDate(inv.due_date)}</td>
                     <td className="py-2.5 text-right text-xs font-semibold">{formatCurrency(inv.total)}</td>
                     <td className="py-2.5 text-right"><StatusBadge type="invoice" value={inv.status} /></td>
+                    <td className="py-2.5 text-right">
+                      <a href={`/api/invoices/${inv.id}/pdf`} download target="_blank" className="text-muted-foreground hover:text-primary transition-colors inline-block" title="Download as PDF">
+                        <Download className="size-4" />
+                      </a>
+                    </td>
                   </tr>
                 ))}
               </tbody>

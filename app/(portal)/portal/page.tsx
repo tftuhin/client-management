@@ -57,7 +57,7 @@ export default async function PortalDashboardPage() {
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { label: 'Project Stage', value: client?.pipeline_stage?.replace(/_/g, ' ') ?? '—', icon: FolderOpen, color: 'text-primary', bg: 'bg-primary/10' },
           { label: 'Total Billed', value: formatCurrency(totalBilled), icon: Receipt, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },

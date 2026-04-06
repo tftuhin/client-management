@@ -110,7 +110,7 @@ export default async function ProjectDetailPage({
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card size="sm">
           <CardContent className="pt-3">
             <p className="text-xs text-muted-foreground">Total invoiced</p>

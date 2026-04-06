@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PortalSidebar } from '@/components/layout/portal-sidebar'
+import { PortalMobileSidebar } from '@/components/layout/portal-mobile-sidebar'
 import { getInitials } from '@/lib/utils'
 
 export default async function PortalLayout({
@@ -32,13 +33,30 @@ export default async function PortalLayout({
   const companyName = client?.company_name ?? ''
 
   return (
-    <div className="flex h-full min-h-screen">
-      <PortalSidebar
-        clientName={displayName}
-        companyName={companyName}
-        initials={getInitials(displayName)}
-      />
-      <main className="flex-1 overflow-y-auto bg-background">
+    <div className="flex flex-col h-full min-h-screen md:flex-row">
+      <header className="flex md:hidden h-14 items-center justify-between border-b px-4 bg-card shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shrink-0">
+            Z
+          </div>
+          <span className="font-semibold text-sm truncate">Client Portal</span>
+        </div>
+        <PortalMobileSidebar
+          clientName={displayName}
+          companyName={companyName}
+          initials={getInitials(displayName)}
+        />
+      </header>
+
+      <div className="hidden md:flex flex-col min-h-screen shrink-0">
+        <PortalSidebar
+          clientName={displayName}
+          companyName={companyName}
+          initials={getInitials(displayName)}
+        />
+      </div>
+
+      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
         {children}
       </main>
     </div>

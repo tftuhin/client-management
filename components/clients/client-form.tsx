@@ -51,6 +51,9 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
           lead_source: client.lead_source ?? '',
           notes: client.notes ?? '',
           country: client.country ?? '',
+          address: client.address ?? '',
+          linkedin_url: client.linkedin_url ?? '',
+          vat_id: client.vat_id ?? '',
         }
       : {
           pipeline_stage: 'lead',
@@ -117,6 +120,25 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
           <Label htmlFor="country">Country</Label>
           <Input id="country" {...register('country')} placeholder="United States" />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+          <Input id="linkedin_url" {...register('linkedin_url')} placeholder="https://linkedin.com/company/acme" />
+          {errors.linkedin_url && <p className="text-xs text-destructive">{errors.linkedin_url.message}</p>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="vat_id">VAT/TAX ID</Label>
+          <Input id="vat_id" {...register('vat_id')} placeholder="GB123456789" />
+          {errors.vat_id && <p className="text-xs text-destructive">{errors.vat_id.message}</p>}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="address">Address</Label>
+        <Input id="address" {...register('address')} placeholder="123 Business Rd, City, State ZIP" />
+        {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

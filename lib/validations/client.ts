@@ -77,6 +77,19 @@ export const createClientSchema = z.object({
     .optional()
     .or(z.literal('')),
 
+  linkedin_url: z
+    .string()
+    .url('Must be a valid URL')
+    .max(500, 'URL must be 500 characters or fewer')
+    .optional()
+    .or(z.literal('')),
+
+  vat_id: z
+    .string()
+    .max(100, 'VAT/TAX ID must be 100 characters or fewer')
+    .optional()
+    .or(z.literal('')),
+
   pipeline_stage: pipelineStageSchema.default('lead'),
 
   pipeline_order: z.coerce.number().int().min(0).default(0),
