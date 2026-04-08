@@ -59,7 +59,7 @@ export function Sidebar({
   const admin = isAdmin(role)
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r bg-card">
+    <aside className="flex h-screen sticky top-0 w-56 flex-col border-r bg-card">
       {/* Brand */}
       <div className="flex h-14 items-center gap-2.5 border-b px-4">
         <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shrink-0">
