@@ -209,6 +209,9 @@ export default async function DashboardPage() {
   const lastMonthRevenue = monthly[lastMonthDate.getMonth()]?.total ?? 0
   const prevAvgSale = lastSales > 0 ? lastRevenue / lastSales : 0
 
+  // Previous month average sale value (for monthly comparison)
+  const prevMonthAvgSale = lastMonthSales > 0 ? lastMonthRevenue / lastMonthSales : 0
+
   // Pipeline value from active offers
   const pipelineValue = (upcomingOffers ?? []).reduce((sum, offer) => sum + (offer.estimated_value ?? 0), 0)
 
@@ -303,7 +306,6 @@ export default async function DashboardPage() {
           activeClients={activeClients}
           totalClients={totalClients}
           currentYear={currentYear}
-          prevYear={prevYear}
           totalRevenue={totalRevenue}
           lastRevenue={lastRevenue}
           totalSales={totalSales}
@@ -316,6 +318,7 @@ export default async function DashboardPage() {
           sameMonthLastYearSales={sameMonthLastYearSales}
           newLeadsSameMonthLastYear={newLeadsSameMonthLastYear}
           currentMonthName={currentMonthName}
+          prevMonthAvgSale={prevMonthAvgSale}
         />
 
         {/* ── Lead Journey ──────────────────────────────────────── */}

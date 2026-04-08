@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { ArrowUp, ArrowDown, TrendingUp, ChevronDown } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ArrowUp, ArrowDown, Minus, TrendingUp, ChevronDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface GrowthMatrixProps {
@@ -19,10 +19,10 @@ interface GrowthMatrixProps {
   churnRate: number | null
   avgSale: number
   prevAvgSale: number
+  prevMonthAvgSale: number
   activeClients: number
   totalClients: number
   currentYear: number
-  prevYear: number
   totalRevenue: number
   lastRevenue: number
   totalSales: number
@@ -42,53 +42,86 @@ function pct(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100
 }
 
-function MetricCard({
-  label,
-  value,
-  unit = '',
-  subLabel,
-  comparisons = [],
-}: {
+function ComparisonBadge({ change }: { change: number | null }) {
+  if (change === null) {
+    return <span className="text-gray-300 text-xs">—</span>
+  }
+
+  const isPositive = change > 0
+  const isNeutral = change === 0
+
+  if (isNeutral) {
+    return (
+      <div className="inline-flex items-center gap-0.5 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+        <Minus className="size-3" />
+        {change.toFixed(1)}%
+      </div>
+    )
+  }
+
+  return (
+    <div className={`inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-xs font-semibold ${
+      isPositive
+        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+        : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
+    }`}>
+      {isPositive ? (
+        <ArrowUp className="size-3" />
+      ) : (
+        <ArrowDown className="size-3" />
+      )}
+      {change > 0 ? '+' : ''}{change.toFixed(1)}%
+    </div>
+  )
+}
+
+interface MetricCardProps {
   label: string
   value: string | number
   unit?: string
+  valueColor?: 'emerald' | 'blue' | 'violet' | 'default'
   subLabel?: string
   comparisons?: Comparison[]
-}) {
+}
+
+const MetricCard = ({
+  label,
+  value,
+  unit = '',
+  valueColor = 'default',
+  subLabel,
+  comparisons = [],
+}: MetricCardProps) => {
+  const valueColorClass = {
+    emerald: 'text-emerald-600 dark:text-emerald-400',
+    blue: 'text-blue-600 dark:text-blue-400',
+    violet: 'text-violet-600 dark:text-violet-400',
+    default: 'text-gray-900 dark:text-foreground',
+  }[valueColor]
+
+  const borderColor = {
+    emerald: 'border-t-emerald-500',
+    blue: 'border-t-blue-500',
+    violet: 'border-t-violet-500',
+    default: '',
+  }[valueColor]
+
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4">
+    <div className={`rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 ${borderColor ? `border-t-2 ${borderColor}` : ''}`}>
       <p className="text-xs text-gray-500 dark:text-muted-foreground mb-2">{label}</p>
-      <div className="flex items-baseline justify-between gap-2 mb-2">
-        <p className="text-2xl font-bold text-gray-900 dark:text-foreground">
-          {value}{unit}
-        </p>
-      </div>
+      <p className={`text-2xl font-bold mb-3 ${valueColorClass}`}>
+        {value}{unit}
+      </p>
 
       {/* Comparisons */}
       {comparisons.length > 0 && (
-        <div className="space-y-1.5 mb-2">
-          {comparisons.map((comp, idx) => {
-            const isPositive = comp.change !== null && comp.change >= 0
-            return (
-              <div key={idx} className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-gray-400 dark:text-muted-foreground">{comp.label}</span>
-                {comp.change !== null ? (
-                  <div className="flex items-center gap-1">
-                    {isPositive ? (
-                      <ArrowUp className="size-3 text-emerald-600" />
-                    ) : (
-                      <ArrowDown className="size-3 text-red-500" />
-                    )}
-                    <span className={`font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {comp.change >= 0 ? '+' : ''}{comp.change.toFixed(1)}%
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-gray-300 dark:text-muted-foreground/50">—</span>
-                )}
-              </div>
-            )
-          })}
+        <div className="space-y-2 mb-3">
+          {comparisons.map((comp, idx) => (
+            <div key={idx} className="flex items-center justify-between gap-2">
+              <span className="text-xs text-gray-500 dark:text-muted-foreground">{comp.label}</span>
+              <ComparisonBadge change={comp.change} />
+            </div>
+          ))}
         </div>
       )}
 
@@ -96,6 +129,9 @@ function MetricCard({
     </div>
   )
 }
+
+// Wrap in memo for performance
+const MemoizedMetricCard = (props: MetricCardProps) => <MetricCard {...props} />
 
 export function GrowthMatrix({
   thisMonthRevenue,
@@ -112,10 +148,10 @@ export function GrowthMatrix({
   churnRate,
   avgSale,
   prevAvgSale,
+  prevMonthAvgSale,
   activeClients,
   totalClients,
   currentYear,
-  prevYear,
   totalRevenue,
   lastRevenue,
   totalSales,
@@ -126,11 +162,56 @@ export function GrowthMatrix({
 }: GrowthMatrixProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
+  // Memoize all comparisons to avoid re-creating arrays on every render
+  const memoizedComparisons = useMemo(
+    () => ({
+      revenueComparisons: [
+        { label: 'vs prev month', change: pct(thisMonthRevenue, lastMonthRevenue) },
+        { label: 'vs last year', change: pct(thisMonthRevenue, sameMonthLastYearRevenue) },
+      ],
+      salesComparisons: [
+        { label: 'vs prev month', change: pct(thisMonthSales, lastMonthSales) },
+        { label: 'vs last year', change: pct(thisMonthSales, sameMonthLastYearSales) },
+      ],
+      leadsComparisons: [
+        { label: 'vs prev month', change: pct(newLeadsThisMonth, newLeadsLastMonth) },
+        { label: 'vs last year', change: pct(newLeadsThisMonth, newLeadsSameMonthLastYear) },
+      ],
+      avgSaleComparisons: [
+        { label: 'vs prev month', change: pct(avgSale, prevMonthAvgSale) },
+        { label: 'vs last year', change: pct(avgSale, prevAvgSale) },
+      ],
+      avgSaleYoyComparisons: [
+        { label: 'vs last year', change: pct(totalSales > 0 ? totalRevenue / totalSales : 0, lastSales > 0 ? lastRevenue / lastSales : 0) },
+      ],
+    }),
+    [
+      thisMonthRevenue,
+      lastMonthRevenue,
+      sameMonthLastYearRevenue,
+      thisMonthSales,
+      lastMonthSales,
+      sameMonthLastYearSales,
+      newLeadsThisMonth,
+      newLeadsLastMonth,
+      newLeadsSameMonthLastYear,
+      avgSale,
+      prevMonthAvgSale,
+      prevAvgSale,
+      totalRevenue,
+      totalSales,
+      lastRevenue,
+      lastSales,
+    ]
+  )
+
   return (
     <div className="rounded-xl border border-gray-200 dark:border-border p-6 space-y-6">
       {/* Header with expand/collapse */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">Growth Matrix</h2>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">
+          Growth Matrix {!isExpanded && <span className="text-gray-500 font-normal ml-1">— {currentMonthName} {currentYear}</span>}
+        </h2>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground transition-colors"
@@ -144,39 +225,34 @@ export function GrowthMatrix({
 
       {/* Key Metrics (Always visible - collapsed state) */}
       <div>
-        {!isExpanded && <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3">Key Metrics</h3>}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Revenue This Month */}
-          <MetricCard
+          <MemoizedMetricCard
             label={`Revenue ${currentMonthName}`}
             value={formatCurrency(thisMonthRevenue)}
-            comparisons={[
-              { label: 'vs prev month', change: pct(thisMonthRevenue, lastMonthRevenue) },
-              { label: 'vs last year', change: pct(thisMonthRevenue, sameMonthLastYearRevenue) },
-            ]}
+            valueColor="emerald"
+            comparisons={memoizedComparisons.revenueComparisons}
             subLabel={`${currentMonthName} ${currentYear}`}
           />
 
           {/* Sales Count This Month */}
-          <MetricCard
+          <MemoizedMetricCard
             label={`Sales ${currentMonthName}`}
             value={thisMonthSales}
-            comparisons={[
-              { label: 'vs prev month', change: pct(thisMonthSales, lastMonthSales) },
-              { label: 'vs last year', change: pct(thisMonthSales, sameMonthLastYearSales) },
-            ]}
+            valueColor="blue"
+            comparisons={memoizedComparisons.salesComparisons}
             subLabel={`${currentMonthName} ${currentYear}`}
           />
 
           {/* Active Clients */}
-          <MetricCard
+          <MemoizedMetricCard
             label="Active Clients"
             value={activeClients}
             subLabel={`of ${totalClients} total clients`}
           />
 
           {/* Conversion Rate */}
-          <MetricCard
+          <MemoizedMetricCard
             label="Conversion Rate"
             value={conversionRate}
             unit="%"
@@ -192,30 +268,17 @@ export function GrowthMatrix({
           <div>
             <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3">Growth Metrics (Monthly)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Revenue MoM */}
-              <MetricCard
-                label="Revenue (This Month)"
-                value={formatCurrency(thisMonthRevenue)}
-                comparisons={[
-                  { label: 'vs prev month', change: pct(thisMonthRevenue, lastMonthRevenue) },
-                  { label: 'vs last year', change: pct(thisMonthRevenue, sameMonthLastYearRevenue) },
-                ]}
-                subLabel={`${currentMonthName} ${currentYear}`}
-              />
-
               {/* New Leads */}
-              <MetricCard
+              <MemoizedMetricCard
                 label="New Leads"
                 value={newLeadsThisMonth}
-                comparisons={[
-                  { label: 'vs prev month', change: pct(newLeadsThisMonth, newLeadsLastMonth) },
-                  { label: 'vs last year', change: pct(newLeadsThisMonth, newLeadsSameMonthLastYear) },
-                ]}
+                valueColor="violet"
+                comparisons={memoizedComparisons.leadsComparisons}
                 subLabel={`${currentMonthName} ${currentYear}`}
               />
 
               {/* Lead Velocity */}
-              <MetricCard
+              <MemoizedMetricCard
                 label="Lead Velocity"
                 value={leadVelocity !== null ? leadVelocity : '—'}
                 unit={leadVelocity !== null ? '%' : ''}
@@ -223,13 +286,10 @@ export function GrowthMatrix({
               />
 
               {/* Avg Deal Size */}
-              <MetricCard
+              <MemoizedMetricCard
                 label="Avg Deal Size"
                 value={formatCurrency(avgSale)}
-                comparisons={[
-                  { label: 'vs prev month', change: pct(avgSale, avgSale > 0 ? (lastMonthRevenue > 0 ? lastMonthRevenue / lastMonthSales : 0) : 0) },
-                  { label: 'vs last year', change: pct(avgSale, prevAvgSale) },
-                ]}
+                comparisons={memoizedComparisons.avgSaleComparisons}
                 subLabel={`${currentMonthName} ${currentYear}`}
               />
             </div>
@@ -238,9 +298,9 @@ export function GrowthMatrix({
           {/* Pipeline & Success Metrics */}
           <div>
             <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3">Pipeline & Success</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Win Rate */}
-              <MetricCard
+              <MemoizedMetricCard
                 label="Win Rate"
                 value={winRate !== null ? winRate : '—'}
                 unit={winRate !== null ? '%' : ''}
@@ -248,7 +308,7 @@ export function GrowthMatrix({
               />
 
               {/* Churn Rate */}
-              <MetricCard
+              <MemoizedMetricCard
                 label="Churn Rate"
                 value={churnRate !== null ? churnRate : '—'}
                 unit={churnRate !== null ? '%' : ''}
@@ -260,21 +320,19 @@ export function GrowthMatrix({
           {/* Year over Year Comparison */}
           <div>
             <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3">Additional YoY Metrics</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Pipeline Value */}
-              <MetricCard
+              <MemoizedMetricCard
                 label="Pipeline Value"
                 value={formatCurrency(pipelineValue)}
                 subLabel="From upcoming offers"
               />
 
               {/* Average YoY Sale Value */}
-              <MetricCard
+              <MemoizedMetricCard
                 label="Avg Sale Value"
                 value={formatCurrency(totalSales > 0 ? totalRevenue / totalSales : 0)}
-                comparisons={[
-                  { label: 'vs last year', change: pct(totalSales > 0 ? totalRevenue / totalSales : 0, lastSales > 0 ? lastRevenue / lastSales : 0) },
-                ]}
+                comparisons={memoizedComparisons.avgSaleYoyComparisons}
                 subLabel="YoY comparison"
               />
             </div>
