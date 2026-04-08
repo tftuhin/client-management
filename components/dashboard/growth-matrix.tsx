@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUp, ArrowDown, TrendingUp } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface GrowthMatrixProps {
@@ -8,11 +8,19 @@ interface GrowthMatrixProps {
   newLeadsLastMonth: number
   conversionRate: number
   winRate: number | null
+  churnRate: number | null
   avgSale: number
   prevAvgSale: number
   activeClients: number
   totalClients: number
   currentYear: number
+  prevYear: number
+  totalRevenue: number
+  lastRevenue: number
+  totalSales: number
+  lastSales: number
+  pipelineValue: number
+  leadVelocity: number | null
 }
 
 function pct(current: number, previous: number): number | null {
@@ -26,15 +34,17 @@ function MetricCard({
   unit = '',
   previous,
   subLabel,
+  trend,
 }: {
   label: string
   value: string | number
   unit?: string
   previous?: number
   subLabel?: string
+  trend?: number | null
 }) {
-  const change = typeof previous === 'number' ? pct(parseFloat(String(value)), previous) : null
-  const isPositive = change !== null && change >= 0
+  const change = typeof previous === 'number' ? pct(parseFloat(String(value)), previous) : (trend ?? null)
+  const isPositive = change !== null && change !== undefined && change >= 0
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4">
@@ -43,7 +53,7 @@ function MetricCard({
         <p className="text-2xl font-bold text-gray-900 dark:text-foreground">
           {value}{unit}
         </p>
-        {change !== null && (
+        {change !== null ? (
           <div className="flex items-center gap-1">
             {isPositive ? (
               <ArrowUp className="size-4 text-emerald-600" />
@@ -54,6 +64,8 @@ function MetricCard({
               {change >= 0 ? '+' : ''}{change.toFixed(1)}%
             </span>
           </div>
+        ) : (
+          <TrendingUp className="size-4 text-gray-300" />
         )}
       </div>
       {subLabel && <p className="text-xs text-gray-400 dark:text-muted-foreground mt-2">{subLabel}</p>}
@@ -68,61 +80,133 @@ export function GrowthMatrix({
   newLeadsLastMonth,
   conversionRate,
   winRate,
+  churnRate,
   avgSale,
   prevAvgSale,
   activeClients,
   totalClients,
+  currentYear,
+  prevYear,
+  totalRevenue,
+  lastRevenue,
+  totalSales,
+  lastSales,
+  pipelineValue,
+  leadVelocity,
 }: GrowthMatrixProps) {
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-border p-6">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground mb-4">Growth Matrix</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {/* Revenue */}
-        <MetricCard
-          label="Revenue (This Month)"
-          value={formatCurrency(thisMonthRevenue)}
-          previous={lastMonthRevenue}
-          subLabel={`vs ${formatCurrency(lastMonthRevenue)} last month`}
-        />
+    <div className="rounded-xl border border-gray-200 dark:border-border p-6 space-y-6">
+      {/* Growth Matrix - Monthly Metrics */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground mb-4">Growth Metrics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Revenue MoM */}
+          <MetricCard
+            label="Revenue (This Month)"
+            value={formatCurrency(thisMonthRevenue)}
+            previous={lastMonthRevenue}
+            subLabel={`vs ${formatCurrency(lastMonthRevenue)} last month`}
+          />
 
-        {/* New Leads */}
-        <MetricCard
-          label="New Leads"
-          value={newLeadsThisMonth}
-          previous={newLeadsLastMonth}
-          subLabel={`vs ${newLeadsLastMonth} leads last month`}
-        />
+          {/* New Leads */}
+          <MetricCard
+            label="New Leads"
+            value={newLeadsThisMonth}
+            previous={newLeadsLastMonth}
+            subLabel={`vs ${newLeadsLastMonth} leads last month`}
+          />
 
-        {/* Conversion Rate */}
-        <MetricCard
-          label="Conversion Rate"
-          value={conversionRate}
-          unit="%"
-          subLabel="(Active + Completed) / Total"
-        />
+          {/* Lead Velocity */}
+          <MetricCard
+            label="Lead Velocity"
+            value={leadVelocity !== null ? leadVelocity : '—'}
+            unit={leadVelocity !== null ? '%' : ''}
+            trend={leadVelocity}
+            subLabel="MoM growth rate"
+          />
 
-        {/* Win Rate */}
-        <MetricCard
-          label="Win Rate"
-          value={winRate !== null ? winRate : '—'}
-          unit={winRate !== null ? '%' : ''}
-          subLabel="Completed / (Completed + Churned)"
-        />
+          {/* Avg Deal Size */}
+          <MetricCard
+            label="Avg Deal Size"
+            value={formatCurrency(avgSale)}
+            previous={prevAvgSale}
+            subLabel={`vs ${formatCurrency(prevAvgSale)} last month`}
+          />
+        </div>
+      </div>
 
-        {/* Avg Deal Size */}
-        <MetricCard
-          label="Avg Deal Size"
-          value={formatCurrency(avgSale)}
-          previous={prevAvgSale}
-          subLabel={`vs ${formatCurrency(prevAvgSale)} last month`}
-        />
+      {/* Pipeline & Success Metrics */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground mb-4">Pipeline & Success</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Active Clients */}
+          <MetricCard
+            label="Active Clients"
+            value={activeClients}
+            subLabel={`of ${totalClients} total clients`}
+          />
 
-        {/* Active Clients */}
-        <MetricCard
-          label="Active Clients"
-          value={activeClients}
-          subLabel={`of ${totalClients} total clients`}
-        />
+          {/* Conversion Rate */}
+          <MetricCard
+            label="Conversion Rate"
+            value={conversionRate}
+            unit="%"
+            subLabel="(Active + Completed) / Total"
+          />
+
+          {/* Win Rate */}
+          <MetricCard
+            label="Win Rate"
+            value={winRate !== null ? winRate : '—'}
+            unit={winRate !== null ? '%' : ''}
+            subLabel="Completed / (Completed + Churned)"
+          />
+
+          {/* Churn Rate */}
+          <MetricCard
+            label="Churn Rate"
+            value={churnRate !== null ? churnRate : '—'}
+            unit={churnRate !== null ? '%' : ''}
+            subLabel="Lost deals"
+          />
+        </div>
+      </div>
+
+      {/* Year over Year Comparison */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground mb-4">Year over Year</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* YoY Revenue */}
+          <MetricCard
+            label={`Revenue ${currentYear}`}
+            value={formatCurrency(totalRevenue)}
+            previous={lastRevenue}
+            subLabel={`vs ${formatCurrency(lastRevenue)} in ${prevYear}`}
+          />
+
+          {/* YoY Sales Count */}
+          <MetricCard
+            label={`Sales Count ${currentYear}`}
+            value={totalSales}
+            previous={lastSales}
+            subLabel={`vs ${lastSales} in ${prevYear}`}
+          />
+
+          {/* Pipeline Value */}
+          <MetricCard
+            label="Pipeline Value"
+            value={formatCurrency(pipelineValue)}
+            subLabel="From upcoming offers"
+          />
+
+          {/* Average YoY Sale Value */}
+          <MetricCard
+            label="Avg Sale Value"
+            value={formatCurrency(totalSales > 0 ? totalRevenue / totalSales : 0)}
+            previous={lastSales > 0 ? lastRevenue / lastSales : 0}
+            subLabel="YoY comparison"
+          />
+        </div>
       </div>
     </div>
   )

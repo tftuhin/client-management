@@ -173,9 +173,21 @@ export default async function DashboardPage() {
       ? Math.round((completedClients / (completedClients + churnedClients)) * 100)
       : null
 
+  const churnRate =
+    completedClients + churnedClients > 0
+      ? Math.round((churnedClients / (completedClients + churnedClients)) * 100)
+      : null
+
   const thisMonthRevenue = monthly[thisMonthDate.getMonth()]?.total ?? 0
   const lastMonthRevenue = monthly[lastMonthDate.getMonth()]?.total ?? 0
   const prevAvgSale = lastSales > 0 ? lastRevenue / lastSales : 0
+
+  // Pipeline value from active offers
+  const pipelineValue = (upcomingOffers ?? []).reduce((sum, offer) => sum + (offer.estimated_value ?? 0), 0)
+
+  // Lead velocity (trend of new leads)
+  const leadVelocity =
+    newLeadsLastMonth > 0 ? Math.round(((newLeadsThisMonth - newLeadsLastMonth) / newLeadsLastMonth) * 100) : null
 
   // ═════════════════════════════════════════════════════════════════
   // Lead Journey Computations
@@ -247,7 +259,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Growth Matrix ─────────────────────────────────────── */}
+        {/* ── Growth Matrix (merged with YoY) ────────────────────── */}
         <GrowthMatrix
           thisMonthRevenue={thisMonthRevenue}
           lastMonthRevenue={lastMonthRevenue}
@@ -255,11 +267,19 @@ export default async function DashboardPage() {
           newLeadsLastMonth={newLeadsLastMonth}
           conversionRate={conversionRate}
           winRate={winRate}
+          churnRate={churnRate}
           avgSale={avgSale}
           prevAvgSale={prevAvgSale}
           activeClients={activeClients}
           totalClients={totalClients}
           currentYear={currentYear}
+          prevYear={prevYear}
+          totalRevenue={totalRevenue}
+          lastRevenue={lastRevenue}
+          totalSales={totalSales}
+          lastSales={lastSales}
+          pipelineValue={pipelineValue}
+          leadVelocity={leadVelocity}
         />
 
         {/* ── Lead Journey ──────────────────────────────────────── */}
@@ -364,37 +384,6 @@ export default async function DashboardPage() {
             </div>
           </div>
         )}
-
-        {/* ── Year over Year ────────────────────────────────────── */}
-        <div className="rounded-xl border border-gray-200 dark:border-border p-6">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground mb-4">Year over Year</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Revenue */}
-            <div>
-              <p className="text-xs text-gray-400 dark:text-muted-foreground mb-1">Revenue</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-gray-900 dark:text-foreground">{formatCurrency(totalRevenue)}</span>
-                <span className="text-sm text-gray-500">{currentYear}</span>
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                <span>{formatCurrency(lastRevenue)} in {prevYear}</span>
-                <PctBadge v={yoyRev} />
-              </div>
-            </div>
-            {/* Sales Count */}
-            <div>
-              <p className="text-xs text-gray-400 dark:text-muted-foreground mb-1">Sales Count</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-gray-900 dark:text-foreground">{totalSales}</span>
-                <span className="text-sm text-gray-500">{currentYear}</span>
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                <span>{lastSales} in {prevYear}</span>
-                <PctBadge v={yoySales} />
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* ── Monthly Breakdown (Expandable) ────────────────────── */}
         <MonthlyBreakdownTable
