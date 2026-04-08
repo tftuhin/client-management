@@ -6,6 +6,7 @@ import { GrowthMatrix } from '@/components/dashboard/growth-matrix'
 import { LeadJourney } from '@/components/dashboard/lead-journey'
 import { MonthlyBreakdownTable } from '@/components/dashboard/monthly-breakdown-table'
 
+import { MonthlyGrowthChart } from '@/components/dashboard/monthly-growth-chart'
 const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const SOURCE_KEYS = ['upwork', 'paddle', 'direct', 'other']
 
@@ -393,6 +394,16 @@ export default async function DashboardPage() {
           currentMonth={now.getMonth()}
         />
 
+
+        {/* ── Monthly Growth Chart ──────────────────────────────── */}
+        <MonthlyGrowthChart
+          data={monthlyWithMom.map(m => ({
+            label: m.label,
+            revenue: m.total,
+            sales: m.sales,
+            mom: m.mom,
+          }))}
+        />
         {/* ── All Sales (client component for tabs) ─────────────── */}
         <AllSalesTable sales={allSales ?? []} sources={INVOICE_SOURCES} />
       </div>
