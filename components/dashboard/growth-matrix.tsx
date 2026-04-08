@@ -7,8 +7,13 @@ import { formatCurrency } from '@/lib/utils'
 interface GrowthMatrixProps {
   thisMonthRevenue: number
   lastMonthRevenue: number
+  thisMonthSales: number
+  lastMonthSales: number
+  sameMonthLastYearRevenue: number
+  sameMonthLastYearSales: number
   newLeadsThisMonth: number
   newLeadsLastMonth: number
+  newLeadsSameMonthLastYear: number
   conversionRate: number
   winRate: number | null
   churnRate: number | null
@@ -24,6 +29,12 @@ interface GrowthMatrixProps {
   lastSales: number
   pipelineValue: number
   leadVelocity: number | null
+  currentMonthName: string
+}
+
+interface Comparison {
+  label: string
+  change: number | null
 }
 
 function pct(current: number, previous: number): number | null {
@@ -35,43 +46,53 @@ function MetricCard({
   label,
   value,
   unit = '',
-  previous,
   subLabel,
-  trend,
+  comparisons = [],
 }: {
   label: string
   value: string | number
   unit?: string
-  previous?: number
   subLabel?: string
-  trend?: number | null
+  comparisons?: Comparison[]
 }) {
-  const change = typeof previous === 'number' ? pct(parseFloat(String(value)), previous) : (trend ?? null)
-  const isPositive = change !== null && change !== undefined && change >= 0
-
   return (
     <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4">
       <p className="text-xs text-gray-500 dark:text-muted-foreground mb-2">{label}</p>
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-baseline justify-between gap-2 mb-2">
         <p className="text-2xl font-bold text-gray-900 dark:text-foreground">
           {value}{unit}
         </p>
-        {change !== null ? (
-          <div className="flex items-center gap-1">
-            {isPositive ? (
-              <ArrowUp className="size-4 text-emerald-600" />
-            ) : (
-              <ArrowDown className="size-4 text-red-500" />
-            )}
-            <span className={`text-sm font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-              {change >= 0 ? '+' : ''}{change.toFixed(1)}%
-            </span>
-          </div>
-        ) : (
-          <TrendingUp className="size-4 text-gray-300" />
-        )}
       </div>
-      {subLabel && <p className="text-xs text-gray-400 dark:text-muted-foreground mt-2">{subLabel}</p>}
+
+      {/* Comparisons */}
+      {comparisons.length > 0 && (
+        <div className="space-y-1.5 mb-2">
+          {comparisons.map((comp, idx) => {
+            const isPositive = comp.change !== null && comp.change >= 0
+            return (
+              <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-gray-400 dark:text-muted-foreground">{comp.label}</span>
+                {comp.change !== null ? (
+                  <div className="flex items-center gap-1">
+                    {isPositive ? (
+                      <ArrowUp className="size-3 text-emerald-600" />
+                    ) : (
+                      <ArrowDown className="size-3 text-red-500" />
+                    )}
+                    <span className={`font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {comp.change >= 0 ? '+' : ''}{comp.change.toFixed(1)}%
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-gray-300 dark:text-muted-foreground/50">—</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {subLabel && <p className="text-xs text-gray-400 dark:text-muted-foreground">{subLabel}</p>}
     </div>
   )
 }
@@ -79,8 +100,13 @@ function MetricCard({
 export function GrowthMatrix({
   thisMonthRevenue,
   lastMonthRevenue,
+  thisMonthSales,
+  lastMonthSales,
+  sameMonthLastYearRevenue,
+  sameMonthLastYearSales,
   newLeadsThisMonth,
   newLeadsLastMonth,
+  newLeadsSameMonthLastYear,
   conversionRate,
   winRate,
   churnRate,
@@ -96,6 +122,7 @@ export function GrowthMatrix({
   lastSales,
   pipelineValue,
   leadVelocity,
+  currentMonthName,
 }: GrowthMatrixProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -119,20 +146,26 @@ export function GrowthMatrix({
       <div>
         {!isExpanded && <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3">Key Metrics</h3>}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* YoY Revenue */}
+          {/* Revenue This Month */}
           <MetricCard
-            label={`Revenue ${currentYear}`}
-            value={formatCurrency(totalRevenue)}
-            previous={lastRevenue}
-            subLabel={`vs ${formatCurrency(lastRevenue)} in ${prevYear}`}
+            label={`Revenue ${currentMonthName}`}
+            value={formatCurrency(thisMonthRevenue)}
+            comparisons={[
+              { label: 'vs prev month', change: pct(thisMonthRevenue, lastMonthRevenue) },
+              { label: 'vs last year', change: pct(thisMonthRevenue, sameMonthLastYearRevenue) },
+            ]}
+            subLabel={`${currentMonthName} ${currentYear}`}
           />
 
-          {/* YoY Sales Count */}
+          {/* Sales Count This Month */}
           <MetricCard
-            label={`Sales Count ${currentYear}`}
-            value={totalSales}
-            previous={lastSales}
-            subLabel={`vs ${lastSales} in ${prevYear}`}
+            label={`Sales ${currentMonthName}`}
+            value={thisMonthSales}
+            comparisons={[
+              { label: 'vs prev month', change: pct(thisMonthSales, lastMonthSales) },
+              { label: 'vs last year', change: pct(thisMonthSales, sameMonthLastYearSales) },
+            ]}
+            subLabel={`${currentMonthName} ${currentYear}`}
           />
 
           {/* Active Clients */}
@@ -163,16 +196,22 @@ export function GrowthMatrix({
               <MetricCard
                 label="Revenue (This Month)"
                 value={formatCurrency(thisMonthRevenue)}
-                previous={lastMonthRevenue}
-                subLabel={`vs ${formatCurrency(lastMonthRevenue)} last month`}
+                comparisons={[
+                  { label: 'vs prev month', change: pct(thisMonthRevenue, lastMonthRevenue) },
+                  { label: 'vs last year', change: pct(thisMonthRevenue, sameMonthLastYearRevenue) },
+                ]}
+                subLabel={`${currentMonthName} ${currentYear}`}
               />
 
               {/* New Leads */}
               <MetricCard
                 label="New Leads"
                 value={newLeadsThisMonth}
-                previous={newLeadsLastMonth}
-                subLabel={`vs ${newLeadsLastMonth} leads last month`}
+                comparisons={[
+                  { label: 'vs prev month', change: pct(newLeadsThisMonth, newLeadsLastMonth) },
+                  { label: 'vs last year', change: pct(newLeadsThisMonth, newLeadsSameMonthLastYear) },
+                ]}
+                subLabel={`${currentMonthName} ${currentYear}`}
               />
 
               {/* Lead Velocity */}
@@ -180,7 +219,6 @@ export function GrowthMatrix({
                 label="Lead Velocity"
                 value={leadVelocity !== null ? leadVelocity : '—'}
                 unit={leadVelocity !== null ? '%' : ''}
-                trend={leadVelocity}
                 subLabel="MoM growth rate"
               />
 
@@ -188,8 +226,11 @@ export function GrowthMatrix({
               <MetricCard
                 label="Avg Deal Size"
                 value={formatCurrency(avgSale)}
-                previous={prevAvgSale}
-                subLabel={`vs ${formatCurrency(prevAvgSale)} last month`}
+                comparisons={[
+                  { label: 'vs prev month', change: pct(avgSale, avgSale > 0 ? (lastMonthRevenue > 0 ? lastMonthRevenue / lastMonthSales : 0) : 0) },
+                  { label: 'vs last year', change: pct(avgSale, prevAvgSale) },
+                ]}
+                subLabel={`${currentMonthName} ${currentYear}`}
               />
             </div>
           </div>
@@ -231,7 +272,9 @@ export function GrowthMatrix({
               <MetricCard
                 label="Avg Sale Value"
                 value={formatCurrency(totalSales > 0 ? totalRevenue / totalSales : 0)}
-                previous={lastSales > 0 ? lastRevenue / lastSales : 0}
+                comparisons={[
+                  { label: 'vs last year', change: pct(totalSales > 0 ? totalRevenue / totalSales : 0, lastSales > 0 ? lastRevenue / lastSales : 0) },
+                ]}
                 subLabel="YoY comparison"
               />
             </div>

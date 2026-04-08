@@ -160,6 +160,32 @@ export default async function DashboardPage() {
   const thisMonthStr = `${thisMonthDate.getFullYear()}-${String(thisMonthDate.getMonth() + 1).padStart(2, '0')}`
   const lastMonthStr = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`
 
+  // This month and last month sales count
+  const thisMonthSales = paid.filter(i => (i.paid_at ?? '').startsWith(thisMonthStr)).length
+  const lastMonthSales = paid.filter(i => (i.paid_at ?? '').startsWith(lastMonthStr)).length
+
+  // Same month of previous year
+  const currentMonthNum = now.getMonth() + 1
+  const sameMonthLastYearStr = `${prevYear}-${String(currentMonthNum).padStart(2, '0')}`
+  const sameMonthLastYearRevenue = paidLast
+    .filter(i => {
+      const m = parseInt((i.paid_at ?? '').substring(5, 7))
+      return m === currentMonthNum
+    })
+    .reduce((s, i) => s + (i.total ?? 0), 0)
+  
+  const sameMonthLastYearSales = paidLast.filter(i => {
+    const m = parseInt((i.paid_at ?? '').substring(5, 7))
+    return m === currentMonthNum
+  }).length
+
+  const newLeadsSameMonthLastYear = clients.filter(c =>
+    c.created_at.startsWith(sameMonthLastYearStr)
+  ).length
+
+  // Current month name for display
+  const currentMonthName = MONTH_LABELS[now.getMonth()]
+
   const newLeadsThisMonth = clients.filter(c => c.created_at.startsWith(thisMonthStr)).length
   const newLeadsLastMonth = clients.filter(c => c.created_at.startsWith(lastMonthStr)).length
 
@@ -284,6 +310,12 @@ export default async function DashboardPage() {
           lastSales={lastSales}
           pipelineValue={pipelineValue}
           leadVelocity={leadVelocity}
+          thisMonthSales={thisMonthSales}
+          lastMonthSales={lastMonthSales}
+          sameMonthLastYearRevenue={sameMonthLastYearRevenue}
+          sameMonthLastYearSales={sameMonthLastYearSales}
+          newLeadsSameMonthLastYear={newLeadsSameMonthLastYear}
+          currentMonthName={currentMonthName}
         />
 
         {/* ── Lead Journey ──────────────────────────────────────── */}
