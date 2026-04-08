@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -27,9 +27,17 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [paymentOpen, setPaymentOpen] = useState(false)
-  const [amount, setAmount] = useState(String(invoice.total - invoice.amount_paid))
+  const [amount, setAmount] = useState('')
   const [method, setMethod] = useState('bank_transfer')
   const [reference, setReference] = useState('')
+
+  // Reset amount whenever the dialog opens or invoice data changes
+  useEffect(() => {
+    if (paymentOpen) {
+      const remaining = invoice.total - invoice.amount_paid
+      setAmount(String(remaining > 0 ? remaining : 0))
+    }
+  }, [paymentOpen, invoice.total, invoice.amount_paid])
 
   async function handleSend() {
     startTransition(async () => {
@@ -40,10 +48,18 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
   }
 
   async function handleRecordPayment() {
+    const paymentAmount = parseFloat(amount)
+    const remaining = invoice.total - invoice.amount_paid
+
+    if (paymentAmount > remaining) {
+      toast.error(`Payment cannot exceed remaining balance of $${remaining.toFixed(2)}`)
+      return
+    }
+
     startTransition(async () => {
       const { error } = await recordPayment({
         invoice_id: invoice.id,
-        amount: parseFloat(amount),
+        amount: paymentAmount,
         method: method as any,
         reference: reference || undefined,
       })
@@ -104,7 +120,10 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleRecordPayment} disabled={isPending || !amount}>
+            <Button
+              onClick={handleRecordPayment}
+              disabled={isPending || !amount || parseFloat(amount) > (invoice.total - invoice.amount_paid)}
+            >
               {isPending ? 'Saving…' : 'Record payment'}
             </Button>
           </DialogFooter>

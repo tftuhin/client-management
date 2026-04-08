@@ -223,6 +223,7 @@ export async function recordPayment(
     return { data: null, error: parsed.error.issues[0]?.message ?? 'Validation error' }
   }
 
+  // Insert payment - the database trigger sync_invoice_amount_paid will handle updating amount_paid and status
   const { error: paymentError } = await supabase.from('invoice_payments').insert({
     ...parsed.data,
     recorded_by: user.id,
@@ -230,32 +231,14 @@ export async function recordPayment(
 
   if (paymentError) return { data: null, error: paymentError.message }
 
+  // Fetch invoice details for activity logging
   const { data: invoice, error: invoiceFetchError } = await supabase
     .from('invoices')
-    .select('invoice_number, total, amount_paid, status, paid_at, client_id, currency')
+    .select('invoice_number, client_id')
     .eq('id', parsed.data.invoice_id)
     .single()
 
   if (invoice && !invoiceFetchError) {
-    const existingPaid = invoice.amount_paid ?? 0
-    const updatedPaid = existingPaid + parsed.data.amount
-    const isFullyPaid = updatedPaid >= invoice.total
-    const updatedStatus = isFullyPaid ? 'paid' : updatedPaid > 0 ? 'partially_paid' : invoice.status
-    const updatedPaidAt = isFullyPaid ? (parsed.data.paid_at ?? new Date().toISOString()) : invoice.paid_at
-
-    const { error: updateInvoiceError } = await supabase
-      .from('invoices')
-      .update({
-        amount_paid: updatedPaid,
-        status: updatedStatus,
-        paid_at: updatedPaidAt,
-      })
-      .eq('id', parsed.data.invoice_id)
-
-    if (updateInvoiceError) {
-      return { data: null, error: updateInvoiceError.message }
-    }
-
     await logActivity(supabase, {
       client_id: invoice.client_id,
       actor_id: user.id,
@@ -266,10 +249,8 @@ export async function recordPayment(
 
     revalidatePath('/invoices')
     revalidatePath(`/clients/${invoice.client_id}`)
-    return { data: null, error: null }
   }
 
-  revalidatePath('/invoices')
   return { data: null, error: null }
 }
 
