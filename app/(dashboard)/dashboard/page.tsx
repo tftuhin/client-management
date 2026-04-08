@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { INVOICE_SOURCES } from '@/lib/constants'
 import { AllSalesTable } from '@/components/dashboard/all-sales-table'
-import { QuickSaleButtons } from '@/components/dashboard/quick-sale-buttons'
 import { GrowthMatrix } from '@/components/dashboard/growth-matrix'
 import { LeadJourney } from '@/components/dashboard/lead-journey'
+import { MonthlyBreakdownTable } from '@/components/dashboard/monthly-breakdown-table'
 
 const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const SOURCE_KEYS = ['upwork', 'paddle', 'direct', 'other']
@@ -262,9 +262,6 @@ export default async function DashboardPage() {
           currentYear={currentYear}
         />
 
-        {/* ── Quick add source buttons ─────────────────────────── */}
-        <QuickSaleButtons sources={activeSources} />
-
         {/* ── Lead Journey ──────────────────────────────────────── */}
         <LeadJourney leads={leadJourneyClients} />
 
@@ -399,59 +396,12 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Monthly Breakdown ─────────────────────────────────── */}
-        <div className="rounded-xl border border-gray-200 dark:border-border overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-border">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">Monthly Breakdown</h2>
-            <span className="inline-flex items-center rounded-full border border-gray-200 dark:border-border bg-white dark:bg-card px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-muted-foreground">
-              {currentYear}
-            </span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-border">
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 dark:text-muted-foreground uppercase tracking-wide">Month</th>
-                  {activeSources.map(src => (
-                    <th key={src.value} className={`px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-wide ${src.color}`}>
-                      {src.label}
-                    </th>
-                  ))}
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 dark:text-muted-foreground uppercase tracking-wide">Total</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 dark:text-muted-foreground uppercase tracking-wide">Sales</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 dark:text-muted-foreground uppercase tracking-wide">MoM</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-border">
-                {monthlyWithMom.map(({ label, bySource, total, sales, mom }) => (
-                  <tr key={label} className={`hover:bg-gray-50/50 dark:hover:bg-muted/20 ${total > 0 ? 'font-medium' : ''}`}>
-                    <td className={`px-5 py-3 text-sm ${total > 0 ? 'text-gray-900 dark:text-foreground' : 'text-gray-400 dark:text-muted-foreground'}`}>{label}</td>
-                    {activeSources.map(src => (
-                      <td key={src.value} className={`px-5 py-3 text-sm ${bySource[src.value] > 0 ? src.color : 'text-gray-300 dark:text-muted-foreground/30'}`}>
-                        {bySource[src.value] > 0 ? formatCurrency(bySource[src.value]) : '—'}
-                      </td>
-                    ))}
-                    <td className="px-5 py-3 text-sm text-gray-900 dark:text-foreground">{total > 0 ? formatCurrency(total) : '—'}</td>
-                    <td className="px-5 py-3 text-sm text-gray-500">{sales > 0 ? sales : '—'}</td>
-                    <td className="px-5 py-3 text-sm">{total > 0 ? <PctBadge v={mom} /> : <span className="text-gray-300 dark:text-muted-foreground/30">—</span>}</td>
-                  </tr>
-                ))}
-                {/* Totals row */}
-                <tr className="border-t-2 border-gray-200 dark:border-border bg-gray-50/60 dark:bg-muted/20 font-semibold">
-                  <td className="px-5 py-3 text-sm text-gray-900 dark:text-foreground">Total {currentYear}</td>
-                  {activeSources.map(src => (
-                    <td key={src.value} className={`px-5 py-3 text-sm ${src.color}`}>
-                      {formatCurrency(sourceTotals[src.value] ?? 0)}
-                    </td>
-                  ))}
-                  <td className="px-5 py-3 text-sm text-gray-900 dark:text-foreground">{formatCurrency(grandTotal)}</td>
-                  <td className="px-5 py-3 text-sm text-gray-900 dark:text-foreground">{grandSales}</td>
-                  <td className="px-5 py-3" />
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* ── Monthly Breakdown (Expandable) ────────────────────── */}
+        <MonthlyBreakdownTable
+          monthlyData={monthlyWithMom}
+          activeSources={activeSources}
+          currentYear={currentYear}
+        />
 
         {/* ── All Sales (client component for tabs) ─────────────── */}
         <AllSalesTable sales={allSales ?? []} sources={INVOICE_SOURCES} />
