@@ -1,6 +1,6 @@
 'use client'
 
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 
 interface MonthlyChartData {
@@ -38,10 +38,7 @@ function CustomTooltip({ active, payload }: any) {
 }
 
 export function MonthlyGrowthChart({ data }: MonthlyGrowthChartProps) {
-  // Filter to only months with data for cleaner visualization
-  const dataWithRevenue = data.filter(m => m.revenue > 0)
-
-  if (dataWithRevenue.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="rounded-xl border border-gray-200 dark:border-border p-6 text-center">
         <p className="text-sm text-gray-500 dark:text-muted-foreground">No data available</p>
@@ -49,94 +46,67 @@ export function MonthlyGrowthChart({ data }: MonthlyGrowthChartProps) {
     )
   }
 
+  const maxRevenue = Math.max(...data.map(d => d.revenue), 1)
+  const maxSales = Math.max(...data.map(d => d.sales), 1)
+
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-border p-6 space-y-6">
+    <div className="rounded-xl border border-gray-200 dark:border-border p-6 space-y-4">
       <div>
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground mb-1">Month-to-Month Growth</h2>
-        <p className="text-xs text-gray-500 dark:text-muted-foreground">Revenue and sales trends across the year</p>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">Revenue & Sales Growth</h2>
+        <p className="text-xs text-gray-500 dark:text-muted-foreground">Monthly trends across the year</p>
       </div>
 
-      {/* Revenue Trend */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3">Revenue Trend</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={dataWithRevenue} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 12 }}
-              stroke="hsl(var(--muted-foreground))"
-              interval={Math.max(0, Math.floor(dataWithRevenue.length / 8) - 1)}
-            />
-            <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ paddingTop: '20px' }} />
-            <Line
-              type="monotone"
-              dataKey="revenue"
-              stroke="hsl(var(--color-emerald-600))"
-              strokeWidth={2}
-              dot={{ fill: 'hsl(var(--color-emerald-600))', r: 4 }}
-              activeDot={{ r: 6 }}
-              name="Revenue"
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Sales Count Trend */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3">Sales Count Trend</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={dataWithRevenue} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 12 }}
-              stroke="hsl(var(--muted-foreground))"
-              interval={Math.max(0, Math.floor(dataWithRevenue.length / 8) - 1)}
-            />
-            <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ paddingTop: '20px' }} />
-            <Bar
-              dataKey="sales"
-              fill="hsl(var(--color-blue-600))"
-              radius={[4, 4, 0, 0]}
-              name="Sales Count"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-3 pt-3">
-        <div className="rounded-lg bg-gray-50 dark:bg-muted/20 p-3">
-          <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Avg Monthly Revenue</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-foreground">
-            {formatCurrency(dataWithRevenue.reduce((sum, m) => sum + m.revenue, 0) / dataWithRevenue.length)}
-          </p>
-        </div>
-        <div className="rounded-lg bg-gray-50 dark:bg-muted/20 p-3">
-          <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Total Revenue</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-foreground">
-            {formatCurrency(dataWithRevenue.reduce((sum, m) => sum + m.revenue, 0))}
-          </p>
-        </div>
-        <div className="rounded-lg bg-gray-50 dark:bg-muted/20 p-3">
-          <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Total Sales</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-foreground">
-            {dataWithRevenue.reduce((sum, m) => sum + m.sales, 0)}
-          </p>
-        </div>
-      </div>
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart
+          data={data}
+          margin={{ top: 5, right: 30, left: 0, bottom: 20 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 12 }}
+            stroke="hsl(var(--muted-foreground))"
+          />
+          <YAxis
+            yAxisId="left"
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fontSize: 12 }}
+            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+            label={{ value: 'Revenue', angle: -90, position: 'insideLeft' }}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fontSize: 12 }}
+            label={{ value: 'Sales', angle: 90, position: 'insideRight' }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend wrapperStyle={{ paddingTop: '20px' }} />
+          <Line
+            yAxisId="left"
+            type="monotone"
+            dataKey="revenue"
+            stroke="hsl(var(--color-emerald-600))"
+            strokeWidth={2.5}
+            dot={{ fill: 'hsl(var(--color-emerald-600))', r: 4 }}
+            activeDot={{ r: 6 }}
+            name="Revenue"
+            isAnimationActive={true}
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="sales"
+            stroke="hsl(var(--color-blue-600))"
+            strokeWidth={2.5}
+            dot={{ fill: 'hsl(var(--color-blue-600))', r: 4 }}
+            activeDot={{ r: 6 }}
+            name="Sales Count"
+            isAnimationActive={true}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   )
 }

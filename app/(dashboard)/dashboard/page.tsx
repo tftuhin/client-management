@@ -7,7 +7,7 @@ import { LeadJourney } from '@/components/dashboard/lead-journey'
 import { MonthlyBreakdownTable } from '@/components/dashboard/monthly-breakdown-table'
 
 import { MonthlyGrowthChart } from '@/components/dashboard/monthly-growth-chart'
-const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 const SOURCE_KEYS = ['upwork', 'paddle', 'direct', 'other']
 
 function pct(a: number, b: number) {
@@ -214,7 +214,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-full bg-white dark:bg-background">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 dark:border-border">
+      <div className="sticky top-0 z-10 backdrop-blur-sm bg-white/95 dark:bg-background/95 flex items-center justify-between px-8 py-4 border-b border-gray-100 dark:border-border">
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center rounded-lg bg-gray-900 dark:bg-foreground px-3 py-1.5 text-sm font-semibold text-white dark:text-background">
             Zeon Studio
@@ -235,30 +235,33 @@ export default async function DashboardPage() {
         {/* ── Stat cards ──────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Revenue */}
-          <div className="rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-card p-5">
+          <div className="rounded-2xl border border-l-4 border-l-emerald-500 border-gray-200 dark:border-border bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950/20 dark:to-card p-5">
             <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Total Revenue</p>
             <p className="text-3xl font-bold text-emerald-600">{formatCurrency(totalRevenue)}</p>
             <p className="text-xs text-gray-400 dark:text-muted-foreground mt-1">completed only</p>
           </div>
           {/* Total Due */}
-          <div className="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/20 p-5">
+          <div className="rounded-2xl border border-l-4 border-l-amber-500 border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/20 p-5">
             <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Total Due</p>
             <p className="text-3xl font-bold text-amber-500">{formatCurrency(totalDue)}</p>
             <p className="text-xs text-gray-400 dark:text-muted-foreground mt-1">{due.length} invoices</p>
           </div>
           {/* Total Sales */}
-          <div className="rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-card p-5">
+          <div className="rounded-2xl border border-gray-200 dark:border-border bg-white dark:bg-card p-5">
             <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Total Sales</p>
             <p className="text-3xl font-bold text-gray-900 dark:text-foreground">{totalSales}</p>
             <p className="text-xs text-gray-400 dark:text-muted-foreground mt-1">completed</p>
           </div>
           {/* Avg Sale */}
-          <div className="rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-card p-5">
+          <div className="rounded-2xl border border-gray-200 dark:border-border bg-white dark:bg-card p-5">
             <p className="text-xs text-gray-500 dark:text-muted-foreground mb-1">Avg Sale ({currentYear})</p>
             <p className="text-3xl font-bold text-gray-900 dark:text-foreground">{formatCurrency(avgSale)}</p>
             <p className="text-xs text-gray-400 dark:text-muted-foreground mt-1">{totalSales} sales this year</p>
           </div>
         </div>
+
+        {/* ── Section divider ─────────────────────────────────────── */}
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-border to-transparent" />
 
         {/* ── Growth Matrix (merged with YoY) ────────────────────── */}
         <GrowthMatrix
