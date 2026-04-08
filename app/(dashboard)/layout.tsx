@@ -31,7 +31,7 @@ export default async function DashboardLayout({
   const firmName = settings?.firm_name ?? 'Zeon CRM'
 
   return (
-    <div className="flex flex-col h-full min-h-screen md:flex-row">
+    <div className="flex flex-col h-screen md:flex-row">
       <header className="flex md:hidden h-14 items-center justify-between border-b px-4 bg-card shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shrink-0">
@@ -47,7 +47,7 @@ export default async function DashboardLayout({
         />
       </header>
 
-      <div className="hidden md:flex flex-col min-h-screen shrink-0">
+      <div className="hidden md:flex">
         <Sidebar
           firmName={firmName}
           userEmail={displayEmail}
