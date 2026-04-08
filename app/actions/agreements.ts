@@ -298,21 +298,24 @@ export async function requestAgreementChanges(
     const clientName = (existing as any).clients?.company_name || 'A client'
     const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL}/agreements/${parsed.data.agreement_id}`
 
-    for (const staff of staffMembers) {
-      if (staff.email) {
-        const emailContent = emailTemplates.agreementChangeRequested({
-          staffName: staff.full_name || 'Team Member',
-          clientName,
-          agreementTitle: existing.title,
-          changeReason: parsed.data.change_reason,
-          adminPortalUrl: adminUrl,
+    // Send emails in parallel instead of sequentially
+    await Promise.all(
+      staffMembers
+        .filter(staff => staff.email)
+        .map(staff => {
+          const emailContent = emailTemplates.agreementChangeRequested({
+            staffName: staff.full_name || 'Team Member',
+            clientName,
+            agreementTitle: existing.title,
+            changeReason: parsed.data.change_reason,
+            adminPortalUrl: adminUrl,
+          })
+          return sendEmail({
+            to: staff.email!,
+            ...emailContent,
+          })
         })
-        await sendEmail({
-          to: staff.email,
-          ...emailContent,
-        })
-      }
-    }
+    )
   }
 
   revalidatePath(`/clients/${existing.client_id}`)

@@ -43,7 +43,7 @@ export default async function ClientDetailPage({
       .order('created_at', { ascending: false }),
     supabase
       .from('invoices')
-      .select('id, invoice_number, title, status, total, due_date, issue_date')
+      .select('id, invoice_number, title, status, total, amount_paid, due_date, issue_date')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false }),
     supabase
@@ -76,7 +76,7 @@ export default async function ClientDetailPage({
   if (!client) notFound()
 
   const totalInvoiced = (invoices ?? []).reduce((s, i) => s + (i.total ?? 0), 0)
-  const totalPaid = 0 // would need payments join
+  const totalPaid = (invoices ?? []).reduce((s, i) => s + (i.amount_paid ?? 0), 0)
 
   return (
     <div className="p-6 space-y-6">

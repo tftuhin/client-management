@@ -89,16 +89,35 @@ export default async function DashboardPage() {
   const lastSales = paidLast.length
   const avgSale = totalSales > 0 ? totalRevenue / totalSales : 0
 
-  // Monthly breakdown
+  // Monthly breakdown - optimized to single pass O(n) instead of O(n*12*sources)
+  const monthlyData = paid.reduce<Map<string, { revenue: number; sales: number; bySource: Record<string, number> }>>(
+    (acc, invoice) => {
+      const paidDate = invoice.paid_at?.split('T')[0] ?? ''
+      const month = paidDate.substring(0, 7) // YYYY-MM format
+      const monthNum = parseInt(month.split('-')[1] ?? '0') - 1
+      const src = invoice.source ?? 'direct'
+
+      if (!acc.has(month)) {
+        acc.set(month, { revenue: 0, sales: 0, bySource: { upwork: 0, paddle: 0, direct: 0, other: 0 } })
+      }
+
+      const monthInfo = acc.get(month)!
+      monthInfo.revenue += invoice.total ?? 0
+      monthInfo.sales += 1
+      monthInfo.bySource[src] = (monthInfo.bySource[src] ?? 0) + (invoice.total ?? 0)
+
+      return acc
+    },
+    new Map()
+  )
+
   const monthly = MONTH_LABELS.map((label, idx) => {
     const m = String(idx + 1).padStart(2, '0')
-    const rows = paid.filter(i => i.paid_at?.startsWith(`${currentYear}-${m}`))
-    const bySource: Record<string, number> = {}
-    for (const src of SOURCE_KEYS) {
-      bySource[src] = rows.filter(i => i.source === src).reduce((s, i) => s + (i.total ?? 0), 0)
-    }
-    const total = rows.reduce((s, i) => s + (i.total ?? 0), 0)
-    const sales = rows.length
+    const monthKey = `${currentYear}-${m}`
+    const monthInfo = monthlyData.get(monthKey)
+    const bySource = monthInfo?.bySource ?? { upwork: 0, paddle: 0, direct: 0, other: 0 }
+    const total = monthInfo?.revenue ?? 0
+    const sales = monthInfo?.sales ?? 0
     return { label, bySource, total, sales }
   })
 
@@ -108,10 +127,14 @@ export default async function DashboardPage() {
     return { ...m, mom: pct(m.total, prev ?? 0) }
   })
 
-  const sourceTotals: Record<string, number> = {}
-  for (const src of SOURCE_KEYS) {
-    sourceTotals[src] = paid.filter(i => i.source === src).reduce((s, i) => s + (i.total ?? 0), 0)
-  }
+  const sourceTotals = paid.reduce<Record<string, number>>(
+    (acc, invoice) => {
+      const src = invoice.source ?? 'direct'
+      acc[src] = (acc[src] ?? 0) + (invoice.total ?? 0)
+      return acc
+    },
+    { upwork: 0, paddle: 0, direct: 0, other: 0 }
+  )
   const grandTotal = paid.reduce((s, i) => s + (i.total ?? 0), 0)
   const grandSales = paid.length
 

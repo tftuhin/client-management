@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo, useCallback, memo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -36,17 +36,19 @@ export function KanbanBoard({ initialClients }: KanbanBoardProps) {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
-  const clientsByStage = PIPELINE_STAGES.reduce<ClientsByStage>((acc, stage) => {
-    acc[stage.value] = clients.filter(c => c.pipeline_stage === stage.value)
-    return acc
-  }, {} as ClientsByStage)
+  const clientsByStage = useMemo(() => {
+    return PIPELINE_STAGES.reduce<ClientsByStage>((acc, stage) => {
+      acc[stage.value] = clients.filter(c => c.pipeline_stage === stage.value)
+      return acc
+    }, {} as ClientsByStage)
+  }, [clients])
 
-  function handleDragStart(event: DragStartEvent) {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const client = clients.find(c => c.id === event.active.id)
     if (client) setActiveClient(client)
-  }
+  }, [clients])
 
-  function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     setActiveClient(null)
     const { active, over } = event
     if (!over) return
@@ -80,7 +82,7 @@ export function KanbanBoard({ initialClients }: KanbanBoardProps) {
         )
       }
     })
-  }
+  }, [clients])
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -100,7 +102,7 @@ export function KanbanBoard({ initialClients }: KanbanBoardProps) {
   )
 }
 
-function KanbanColumn({
+const KanbanColumn = memo(function KanbanColumn({
   stage,
   clients,
 }: {
@@ -137,9 +139,9 @@ function KanbanColumn({
       </SortableContext>
     </div>
   )
-}
+})
 
-function ClientCard({ client, isDragging }: { client: Client; isDragging?: boolean }) {
+const ClientCard = memo(function ClientCard({ client, isDragging }: { client: Client; isDragging?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } = useSortable({
     id: client.id,
   })
@@ -188,4 +190,4 @@ function ClientCard({ client, isDragging }: { client: Client; isDragging?: boole
       )}
     </div>
   )
-}
+})

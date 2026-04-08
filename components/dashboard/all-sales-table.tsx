@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
@@ -55,11 +55,15 @@ const STATUS_LABEL: Record<string, string> = {
 export function AllSalesTable({ sales, sources }: AllSalesTableProps) {
   const [tab, setTab] = useState<Tab>('all')
 
-  const filtered = sales.filter(s => {
-    if (tab === 'one_time') return s.invoice_type === 'one_time' || s.invoice_type === null
-    if (tab === 'recurring') return s.invoice_type === 'recurring'
-    return true
-  })
+  const sourcesMap = useMemo(() => new Map(sources.map(s => [s.value, s])), [sources])
+
+  const filtered = useMemo(() => {
+    return sales.filter(s => {
+      if (tab === 'one_time') return s.invoice_type === 'one_time' || s.invoice_type === null
+      if (tab === 'recurring') return s.invoice_type === 'recurring'
+      return true
+    })
+  }, [sales, tab])
 
   const tabs: { value: Tab; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -113,7 +117,7 @@ export function AllSalesTable({ sales, sources }: AllSalesTableProps) {
             </tr>
           ) : (
             filtered.map(inv => {
-              const src = sources.find(s => s.value === inv.source)
+              const src = sourcesMap.get(inv.source ?? '')
               const d = new Date(inv.issue_date)
               const monthLabel = `${d.toLocaleString('default', { month: 'short' })} ${d.getFullYear()}`
               const statusStyle = STATUS_STYLE[inv.status] ?? 'bg-gray-50 text-gray-500 border-gray-200'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useMemo } from 'react'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -57,20 +57,26 @@ export function InvoiceForm({ clients, projects, agreements, defaultClientId, de
 
   const { fields, append, remove } = useFieldArray({ control, name: 'line_items' })
 
-  const watchedItems = watch('line_items')
-  const watchedTaxPct = watch('tax_pct') ?? 0
-  const watchedDiscountPct = watch('discount_pct') ?? 0
-  const watchedDiscountFlat = watch('discount_flat') ?? 0
-  const watchedCurrency = watch('currency') ?? 'USD'
+  const [watchedItems, watchedTaxPct, watchedDiscountPct, watchedDiscountFlat, watchedCurrency] = watch([
+    'line_items',
+    'tax_pct',
+    'discount_pct',
+    'discount_flat',
+    'currency',
+  ])
 
-  const subtotal = (watchedItems ?? []).reduce((sum, item) => {
-    return sum + ((item.quantity || 0) * (item.unit_price || 0))
-  }, 0)
+  const { subtotal, discountAmount, taxableAmount, taxAmount, total } = useMemo(() => {
+    const subtotal = (watchedItems ?? []).reduce((sum, item) => {
+      return sum + ((item?.quantity || 0) * (item?.unit_price || 0))
+    }, 0)
 
-  const discountAmount = (subtotal * watchedDiscountPct / 100) + Number(watchedDiscountFlat || 0)
-  const taxableAmount = subtotal - discountAmount
-  const taxAmount = taxableAmount * watchedTaxPct / 100
-  const total = taxableAmount + taxAmount
+    const discountAmount = (subtotal * (watchedDiscountPct ?? 0) / 100) + Number(watchedDiscountFlat || 0)
+    const taxableAmount = subtotal - discountAmount
+    const taxAmount = taxableAmount * (watchedTaxPct ?? 0) / 100
+    const total = taxableAmount + taxAmount
+
+    return { subtotal, discountAmount, taxableAmount, taxAmount, total }
+  }, [watchedItems, watchedTaxPct, watchedDiscountPct, watchedDiscountFlat])
 
   function onSubmit(values: CreateInvoiceInput) {
     startTransition(async () => {
