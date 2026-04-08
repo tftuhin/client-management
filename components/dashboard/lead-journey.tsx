@@ -114,14 +114,14 @@ export function LeadJourney({ leads }: LeadJourneyProps) {
                     >
                       {/* Outer pulsing ring */}
                       <div
-                        className={`absolute inset-0 rounded-full animate-ping opacity-75 ${
+                        className={`absolute rounded-full animate-ping ${
                           lead.isStuck ? 'bg-red-400' : 'bg-emerald-400'
                         }`}
                         style={{
-                          width: '14px',
-                          height: '14px',
-                          left: '-7px',
-                          top: '-7px',
+                          width: '16px',
+                          height: '16px',
+                          left: '-3px',
+                          top: '-3px',
                           animationDelay: `${leadIdx * 0.1}s`,
                           animationDuration: '2s',
                         }}
