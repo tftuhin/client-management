@@ -17,6 +17,7 @@ interface MonthlyBreakdownTableProps {
   monthlyData: MonthlyData[]
   activeSources: (typeof INVOICE_SOURCES)[number][]
   currentYear: number
+  currentMonth: number
 }
 
 function PctBadge({ v }: { v: number | null }) {
@@ -33,11 +34,14 @@ export function MonthlyBreakdownTable({
   monthlyData,
   activeSources,
   currentYear,
+  currentMonth,
 }: MonthlyBreakdownTableProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Show 3 months by default, all months when expanded
-  const displayedMonths = isExpanded ? monthlyData : monthlyData.slice(-3).reverse()
+  // Show 3 most recent months (up to current month), all months when expanded
+  const displayedMonths = isExpanded
+    ? monthlyData
+    : monthlyData.slice(Math.max(0, currentMonth - 2), currentMonth + 1)
 
   // Calculate totals
   const sourceTotals = activeSources.reduce<Record<string, number>>((acc, src) => {

@@ -390,6 +390,7 @@ export default async function DashboardPage() {
           monthlyData={monthlyWithMom}
           activeSources={activeSources}
           currentYear={currentYear}
+          currentMonth={now.getMonth()}
         />
 
         {/* ── All Sales (client component for tabs) ─────────────── */}
