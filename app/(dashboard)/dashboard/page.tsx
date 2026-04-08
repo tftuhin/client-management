@@ -98,7 +98,7 @@ export default async function DashboardPage() {
   const avgSale = totalSales > 0 ? totalRevenue / totalSales : 0
 
   // Monthly breakdown - optimized to single pass O(n) instead of O(n*12*sources)
-  const monthlyData = paid.reduce<Map<string, { revenue: number; sales: number; bySource: Record<string, number> }>>(
+  const monthlyData: Map<string, { revenue: number; sales: number; bySource: Record<string, number> }> = paid.reduce(
     (acc, invoice) => {
       const paidDate = invoice.paid_at?.split('T')[0] ?? ''
       const month = paidDate.substring(0, 7) // YYYY-MM format
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
 
       return acc
     },
-    new Map()
+    new Map<string, { revenue: number; sales: number; bySource: Record<string, number> }>()
   )
 
   const monthly = MONTH_LABELS.map((label, idx) => {
@@ -135,13 +135,13 @@ export default async function DashboardPage() {
     return { ...m, mom: pct(m.total, prev ?? 0) }
   })
 
-  const sourceTotals = paid.reduce<Record<string, number>>(
+  const sourceTotals: Record<string, number> = paid.reduce(
     (acc, invoice) => {
       const src = invoice.source ?? 'direct'
       acc[src] = (acc[src] ?? 0) + (invoice.total ?? 0)
       return acc
     },
-    { upwork: 0, paddle: 0, direct: 0, other: 0 }
+    { upwork: 0, paddle: 0, direct: 0, other: 0 } as Record<string, number>
   )
   const grandTotal = paid.reduce((s, i) => s + (i.total ?? 0), 0)
   const grandSales = paid.length
