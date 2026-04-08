@@ -19,141 +19,145 @@ interface LeadJourneyProps {
 export function LeadJourney({ leads }: LeadJourneyProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-  // Group leads by stage
-  const leadsByStage = PIPELINE_STAGES.reduce<Record<string, Lead[]>>((acc, s) => {
-    acc[s.value] = leads.filter(l => l.stage === s.value)
-    return acc
-  }, {} as Record<string, Lead[]>)
+  // Get stage position (0-7)
+  const getStagePosition = (stage: PipelineStage): number => {
+    return PIPELINE_STAGES.findIndex(s => s.value === stage)
+  }
 
-  // Separate completed/churned (show differently) from active pipeline
-  const isActiveStage = (stage: PipelineStage) => stage !== 'completed' && stage !== 'churned'
+  // Limit to first 50 leads for performance
+  const displayedLeads = leads.slice(0, 50)
+  const hiddenCount = leads.length - displayedLeads.length
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-border p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">Lead Journey Pipeline</h2>
-        <span className="text-xs text-gray-400 dark:text-muted-foreground">{leads.length} active leads</span>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">Lead Journey Pipeline</h2>
+          <p className="text-xs text-gray-500 dark:text-muted-foreground mt-1">
+            {displayedLeads.length} leads
+            {hiddenCount > 0 && ` (${hiddenCount} more)`}
+          </p>
+        </div>
+        <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="relative size-3">
+              <div className="absolute inset-0 rounded-full animate-ping opacity-75 bg-emerald-400" style={{ animationDuration: '2s' }} />
+              <div className="relative rounded-full size-2.5 bg-emerald-500" />
+            </div>
+            <span className="text-gray-600 dark:text-muted-foreground">Active</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative size-3">
+              <div className="absolute inset-0 rounded-full animate-ping opacity-75 bg-red-400" style={{ animationDuration: '2s' }} />
+              <div className="relative rounded-full size-2.5 bg-red-500" />
+            </div>
+            <span className="text-gray-600 dark:text-muted-foreground">Stuck</span>
+          </div>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[1200px] space-y-4">
-          {/* Pipeline line with stages */}
-          <div className="relative h-24 bg-gradient-to-r from-gray-50 dark:from-card to-gray-100 dark:to-border rounded-lg border border-gray-100 dark:border-border/50 p-4">
-            {/* Connecting line */}
-            <div className="absolute top-12 left-0 right-0 h-0.5 bg-gray-300 dark:bg-border"></div>
-
-            {/* Stage nodes */}
-            <div className="relative h-full flex items-center justify-between px-2">
-              {PIPELINE_STAGES.map((stage, idx) => (
-                <div key={stage.value} className="flex flex-col items-center gap-1">
-                  {/* Stage dot on the line */}
-                  <div className={`size-3 rounded-full border-2 border-white dark:border-card z-10 ${stage.color.split(' ')[0]}`}></div>
-
-                  {/* Stage label */}
-                  <p className="text-xs font-medium text-gray-600 dark:text-muted-foreground text-center max-w-[80px] leading-tight">
-                    {stage.label}
-                  </p>
-
-                  {/* Lead count badge */}
-                  {leadsByStage[stage.value].length > 0 && (
-                    <span className="text-xs font-semibold text-gray-700 dark:text-foreground bg-gray-200/50 dark:bg-muted px-1.5 py-0.5 rounded">
-                      {leadsByStage[stage.value].length}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+        <div className="min-w-max">
+          {/* Header with stage labels */}
+          <div className="flex gap-1 mb-2">
+            <div className="w-32 flex-shrink-0" />
+            {PIPELINE_STAGES.map((stage, idx) => (
+              <div
+                key={stage.value}
+                className="flex-1 min-w-[120px] px-2 text-center"
+              >
+                <p className="text-xs font-semibold text-gray-600 dark:text-muted-foreground">
+                  {stage.label}
+                </p>
+              </div>
+            ))}
           </div>
 
-          {/* Dots section - all stages */}
-          <div className="relative h-32">
-            <div className="flex justify-between h-full">
-              {PIPELINE_STAGES.map((stage) => {
-                const stageLeads = leadsByStage[stage.value] || []
-                const MAX_VISIBLE = 12
-                const overflow = stageLeads.length > MAX_VISIBLE
+          {/* Journey lines for each lead */}
+          <div className="space-y-2">
+            {displayedLeads.map((lead, leadIdx) => {
+              const stagePos = getStagePosition(lead.stage as PipelineStage)
+              const stagePercentage = (stagePos / (PIPELINE_STAGES.length - 1)) * 100
 
-                return (
-                  <div key={stage.value} className="flex-1 flex flex-col items-center gap-1 min-w-[120px]">
-                    {/* Dots grid for this stage */}
-                    <div className="flex flex-wrap gap-1.5 justify-center">
-                      {stageLeads.slice(0, MAX_VISIBLE).map((lead, idx) => (
+              return (
+                <div key={lead.id} className="flex gap-1 items-center group">
+                  {/* Lead name */}
+                  <div className="w-32 flex-shrink-0 pr-2">
+                    <p className="text-xs font-medium text-gray-700 dark:text-foreground truncate group-hover:text-primary transition-colors">
+                      {lead.company_name}
+                    </p>
+                  </div>
+
+                  {/* Journey line */}
+                  <div className="flex-1 min-w-[600px] relative h-6 bg-gradient-to-r from-gray-50/50 dark:from-card/50 to-gray-100/50 dark:to-border/50 rounded-full border border-gray-200 dark:border-border/50 overflow-hidden">
+                    {/* Background line */}
+                    <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-gray-300 dark:from-border via-gray-300 dark:via-border to-gray-300 dark:to-border transform -translate-y-1/2" />
+
+                    {/* Stage markers */}
+                    <div className="absolute inset-0 flex items-center justify-between px-2">
+                      {PIPELINE_STAGES.map((stage, idx) => (
                         <div
-                          key={lead.id}
-                          className="relative group cursor-pointer"
-                          onMouseEnter={() => setHoveredId(lead.id)}
-                          onMouseLeave={() => setHoveredId(null)}
+                          key={stage.value}
+                          className="flex-1 flex justify-center"
                         >
-                          {/* Outer pulsing ring */}
-                          <div
-                            className={`absolute inset-0 rounded-full animate-ping opacity-75 ${
-                              lead.isStuck ? 'bg-red-400' : 'bg-emerald-400'
-                            }`}
-                            style={{
-                              animationDelay: `${idx * 0.15}s`,
-                              animationDuration: '2s',
-                            }}
-                          />
-
-                          {/* Inner solid dot */}
-                          <div
-                            className={`relative rounded-full size-2.5 transition-all ${
-                              lead.isStuck
-                                ? 'bg-red-500 hover:bg-red-600'
-                                : 'bg-emerald-500 hover:bg-emerald-600'
-                            }`}
-                          />
-
-                          {/* Tooltip */}
-                          {hoveredId === lead.id && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap bg-gray-900 dark:bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">
-                              <p className="font-medium">{lead.company_name}</p>
-                              <p className="text-gray-300">
-                                {lead.daysInStage}d in {stage.label}
-                              </p>
-                            </div>
-                          )}
+                          <div className="size-2 rounded-full bg-gray-400 dark:bg-muted border border-white dark:border-card z-10" />
                         </div>
                       ))}
+                    </div>
 
-                      {/* Overflow badge */}
-                      {overflow && (
-                        <div className="inline-flex items-center justify-center size-6 rounded-full bg-gray-300 dark:bg-muted text-xs font-bold text-gray-700 dark:text-foreground">
-                          +{stageLeads.length - MAX_VISIBLE}
+                    {/* Blinking dot at current stage */}
+                    <div
+                      className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-20"
+                      style={{ left: `${stagePercentage}%` }}
+                      onMouseEnter={() => setHoveredId(lead.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                    >
+                      {/* Outer pulsing ring */}
+                      <div
+                        className={`absolute inset-0 rounded-full animate-ping opacity-75 ${
+                          lead.isStuck ? 'bg-red-400' : 'bg-emerald-400'
+                        }`}
+                        style={{
+                          width: '14px',
+                          height: '14px',
+                          left: '-7px',
+                          top: '-7px',
+                          animationDelay: `${leadIdx * 0.1}s`,
+                          animationDuration: '2s',
+                        }}
+                      />
+
+                      {/* Inner solid dot */}
+                      <div
+                        className={`relative rounded-full size-2.5 border-2 border-white dark:border-card transition-all cursor-pointer ${
+                          lead.isStuck
+                            ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/50'
+                            : 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/50'
+                        }`}
+                      />
+
+                      {/* Tooltip */}
+                      {hoveredId === lead.id && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg px-3 py-2 z-50 pointer-events-none shadow-lg border border-gray-700 dark:border-gray-600">
+                          <p className="font-semibold">{lead.company_name}</p>
+                          <p className="text-emerald-300">{PIPELINE_STAGES[stagePos]?.label}</p>
+                          <p className="text-gray-400">{lead.daysInStage} days in stage</p>
+                          {lead.isStuck && (
+                            <p className="text-red-400 font-medium mt-1">⚠️ Stuck for {lead.daysInStage} days</p>
+                          )}
                         </div>
                       )}
                     </div>
-
-                    {/* Stage status indicator */}
-                    {stageLeads.length > 0 && (
-                      <p className="text-xs text-gray-500 dark:text-muted-foreground mt-1">
-                        {isActiveStage(stage.value as PipelineStage)
-                          ? `${stageLeads.filter(l => l.isStuck).length} stuck`
-                          : 'final'}
-                      </p>
-                    )}
                   </div>
-                )
-              })}
-            </div>
-          </div>
+                </div>
+              )
+            })}
 
-          {/* Legend */}
-          <div className="flex items-center gap-6 text-xs text-gray-600 dark:text-muted-foreground border-t border-gray-100 dark:border-border pt-3">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full animate-ping opacity-75 bg-emerald-400" style={{ animationDuration: '2s' }} />
-                <div className="relative rounded-full size-2 bg-emerald-500" />
+            {hiddenCount > 0 && (
+              <div className="text-xs text-gray-500 dark:text-muted-foreground py-2 px-3">
+                + {hiddenCount} more leads
               </div>
-              <span>Active (updated within 2 weeks)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full animate-ping opacity-75 bg-red-400" style={{ animationDuration: '2s' }} />
-                <div className="relative rounded-full size-2 bg-red-500" />
-              </div>
-              <span>Stuck (no activity for 2+ weeks)</span>
-            </div>
+            )}
           </div>
         </div>
       </div>
