@@ -3,6 +3,8 @@ import { formatCurrency } from '@/lib/utils'
 import { INVOICE_SOURCES } from '@/lib/constants'
 import { AllSalesTable } from '@/components/dashboard/all-sales-table'
 import { QuickSaleButtons } from '@/components/dashboard/quick-sale-buttons'
+import { GrowthMatrix } from '@/components/dashboard/growth-matrix'
+import { LeadJourney } from '@/components/dashboard/lead-journey'
 
 const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const SOURCE_KEYS = ['upwork', 'paddle', 'direct', 'other']
@@ -44,6 +46,7 @@ export default async function DashboardPage() {
     { data: dueInvoices },
     { data: allSales },
     { data: upcomingOffers },
+    { data: allClients },
   ] = await Promise.all([
     supabase
       .from('invoices')
@@ -76,6 +79,11 @@ export default async function DashboardPage() {
       .gte('follow_up_date', todayStr)
       .lte('follow_up_date', in7DaysStr)
       .order('follow_up_date', { ascending: true }),
+    supabase
+      .from('clients')
+      .select('id, company_name, pipeline_stage, created_at, updated_at')
+      .eq('is_archived', false)
+      .order('created_at', { ascending: true }),
   ])
 
   const paid = invoicesThisYear ?? []
@@ -142,6 +150,45 @@ export default async function DashboardPage() {
   const yoyRev = pct(totalRevenue, lastRevenue)
   const yoySales = pct(totalSales, lastSales)
 
+  // ═════════════════════════════════════════════════════════════════
+  // Growth Matrix Computations
+  // ═════════════════════════════════════════════════════════════════
+  const clients = allClients ?? []
+  const thisMonthDate = new Date()
+  const lastMonthDate = new Date(thisMonthDate.getFullYear(), thisMonthDate.getMonth() - 1, 1)
+  const thisMonthStr = `${thisMonthDate.getFullYear()}-${String(thisMonthDate.getMonth() + 1).padStart(2, '0')}`
+  const lastMonthStr = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`
+
+  const newLeadsThisMonth = clients.filter(c => c.created_at.startsWith(thisMonthStr)).length
+  const newLeadsLastMonth = clients.filter(c => c.created_at.startsWith(lastMonthStr)).length
+
+  const activeClients = clients.filter(c => c.pipeline_stage === 'active').length
+  const completedClients = clients.filter(c => c.pipeline_stage === 'completed').length
+  const churnedClients = clients.filter(c => c.pipeline_stage === 'churned').length
+  const totalClients = clients.length
+
+  const conversionRate = totalClients > 0 ? Math.round(((activeClients + completedClients) / totalClients) * 100) : 0
+  const winRate =
+    completedClients + churnedClients > 0
+      ? Math.round((completedClients / (completedClients + churnedClients)) * 100)
+      : null
+
+  const thisMonthRevenue = monthly[thisMonthDate.getMonth()]?.total ?? 0
+  const lastMonthRevenue = monthly[lastMonthDate.getMonth()]?.total ?? 0
+  const prevAvgSale = lastSales > 0 ? lastRevenue / lastSales : 0
+
+  // ═════════════════════════════════════════════════════════════════
+  // Lead Journey Computations
+  // ═════════════════════════════════════════════════════════════════
+  const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000
+  const leadJourneyClients = clients.map(c => ({
+    id: c.id,
+    company_name: c.company_name,
+    stage: c.pipeline_stage,
+    isStuck: now.getTime() - new Date(c.updated_at).getTime() > TWO_WEEKS_MS,
+    daysInStage: Math.floor((now.getTime() - new Date(c.updated_at).getTime()) / (1000 * 60 * 60 * 24)),
+  }))
+
   const displayName = staffRow?.full_name ?? user?.email ?? ''
   const displayEmail = staffRow?.email ?? user?.email ?? ''
   const initials = displayName.charAt(0).toUpperCase()
@@ -200,8 +247,26 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* ── Growth Matrix ─────────────────────────────────────── */}
+        <GrowthMatrix
+          thisMonthRevenue={thisMonthRevenue}
+          lastMonthRevenue={lastMonthRevenue}
+          newLeadsThisMonth={newLeadsThisMonth}
+          newLeadsLastMonth={newLeadsLastMonth}
+          conversionRate={conversionRate}
+          winRate={winRate}
+          avgSale={avgSale}
+          prevAvgSale={prevAvgSale}
+          activeClients={activeClients}
+          totalClients={totalClients}
+          currentYear={currentYear}
+        />
+
         {/* ── Quick add source buttons ─────────────────────────── */}
         <QuickSaleButtons sources={activeSources} />
+
+        {/* ── Lead Journey ──────────────────────────────────────── */}
+        <LeadJourney leads={leadJourneyClients} />
 
         {/* ── Due Invoices ──────────────────────────────────────── */}
         {due.length > 0 && (
